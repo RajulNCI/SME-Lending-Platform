@@ -1,8 +1,7 @@
 import { createGlobalStyle } from 'styled-components';
-import { Theme } from './theme';
 
-const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap');
+const GlobalStyles = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
   *, *::before, *::after {
     box-sizing: border-box;
@@ -14,18 +13,22 @@ const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    /* prevent font scaling on orientation change on iOS */
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     font-family: ${({ theme }) => theme.fonts.body};
     font-size: ${({ theme }) => theme.fontSizes.md};
-    font-weight: ${({ theme }) => theme.fontWeights.regular};
     color: ${({ theme }) => theme.colors.text.primary};
     background-color: ${({ theme }) => theme.colors.background};
     line-height: ${({ theme }) => theme.lineHeights.normal};
     min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
   }
+
+  html { height: -webkit-fill-available; }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: ${({ theme }) => theme.fonts.heading};
@@ -37,7 +40,7 @@ const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
   a {
     color: ${({ theme }) => theme.colors.text.link};
     text-decoration: none;
-    transition: color ${({ theme }) => theme.transitions.fast};
+    /* larger tap target on mobile */
     &:hover { text-decoration: underline; }
   }
 
@@ -46,15 +49,21 @@ const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
     font-family: ${({ theme }) => theme.fonts.body};
     border: none;
     background: none;
+    /* remove tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   input, textarea, select {
     font-family: ${({ theme }) => theme.fonts.body};
     font-size: ${({ theme }) => theme.fontSizes.md};
+    /* prevents iOS zoom on focus when font-size < 16px */
+    font-size: max(16px, ${({ theme }) => theme.fontSizes.md});
+    border-radius: 0;
+    -webkit-appearance: none;
   }
 
   img, svg { display: block; max-width: 100%; }
-
   ul, ol { list-style: none; }
 
   :focus-visible {
@@ -68,8 +77,8 @@ const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
     color: ${({ theme }) => theme.colors.primary[800]};
   }
 
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: ${({ theme }) => theme.colors.gray[100]}; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.colors.primary[300]};
     border-radius: ${({ theme }) => theme.radii.full};
