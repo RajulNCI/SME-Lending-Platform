@@ -1,0 +1,72 @@
+# ── Node / React ──────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.next/
+out/
+.cache/
+*.tsbuildinfo
+.npm
+.turbo/
+storybook-static/
+
+# Env — never commit real values
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Terraform ─────────────────────────────────────────────────────────────────
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfvars
+!*.tfvars.example
+**/.terraform.lock.hcl
+**/terraform.tfplan
+**/crash.log
+
+# ── AWS / Secrets ─────────────────────────────────────────────────────────────
+.aws/credentials
+*.pem
+*.key
+*.p12
+*.crt
+secrets/
+.secrets
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.swp
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Test output ───────────────────────────────────────────────────────────────
+coverage/
+test-results/
+playwright-report/

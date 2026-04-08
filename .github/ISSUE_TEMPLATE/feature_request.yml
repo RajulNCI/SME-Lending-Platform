@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a new feature
+labels: ["feature","triage"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Feature summary
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Underwriting / decisioning
+        - Payments / SEPA
+        - Reporting / CCR / AnaCredit
+        - IFRS 9 / ECL
+        - Compliance / EU AI Act
+        - DORA / Resilience
+        - Identity / SSO
+        - Frontend UX
+        - Infrastructure
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / user story
+      placeholder: "As a [role], I need [action] so that [outcome]"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: "Given ... When ... Then ..."
+  - type: dropdown
+    id: regulation
+    attributes:
+      label: Regulatory driver
+      options: [None, EBA, EU AI Act, GDPR Article 22, DORA, CCR/AnaCredit, IFRS 9, SEPA/PSD2, Other]

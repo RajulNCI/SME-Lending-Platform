@@ -1,0 +1,133 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]          # auto-deploy to staging
+    tags: ['v*']              # manual tag triggers production
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        required: true
+
+permissions:
+  id-token: write   # OIDC — no long-lived AWS keys
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+
+jobs:
+
+  setup:
+    name: Resolve environment
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.e.outputs.env }}
+      tag: ${{ github.sha }}
+    steps:
+      - id: e
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ inputs.environment }}" != "" ]]; then
+            echo "env=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "env=staging" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    name: Build + push Docker images
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (LabRole via OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/LabRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push web
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/web
+          push: true
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/creditcore-web:${{ needs.setup.outputs.tag }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/creditcore-web:latest
+
+      - name: Build & push api
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/api
+          push: true
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/creditcore-api:${{ needs.setup.outputs.tag }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/creditcore-api:latest
+
+  deploy:
+    name: Deploy to ${{ needs.setup.outputs.env }}
+    runs-on: ubuntu-latest
+    needs: [setup, build-and-push]
+    environment: ${{ needs.setup.outputs.env }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (LabRole via OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/LabRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.0"
+
+      - name: Terraform apply
+        run: |
+          cd infrastructure/terraform/environments/${{ needs.setup.outputs.env }}
+          terraform init
+          terraform apply -auto-approve -var="image_tag=${{ needs.setup.outputs.tag }}"
+
+      - name: Update ECS — web
+        run: |
+          aws ecs update-service \
+            --cluster creditcore-${{ needs.setup.outputs.env }} \
+            --service creditcore-web \
+            --force-new-deployment
+
+      - name: Update ECS — api
+        run: |
+          aws ecs update-service \
+            --cluster creditcore-${{ needs.setup.outputs.env }} \
+            --service creditcore-api \
+            --force-new-deployment
+
+      - name: Wait for stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster creditcore-${{ needs.setup.outputs.env }} \
+            --services creditcore-web creditcore-api
+
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    needs: [setup, deploy]
+    steps:
+      - name: Health check
+        run: |
+          URL="https://${{ needs.setup.outputs.env }}.creditcore.io/api/health"
+          for i in 1 2 3 4 5; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" $URL)
+            [ "$CODE" = "200" ] && echo "Health OK" && exit 0
+            echo "Attempt $i: $CODE — waiting 15s"
+            sleep 15
+          done
+          echo "Smoke test failed" && exit 1
