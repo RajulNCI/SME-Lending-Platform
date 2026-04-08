@@ -354,7 +354,7 @@ const LoginPage: React.FC = () => {
       <Brand>
         <BrandLogo>
           <LogoMark>S</LogoMark>
-          <LogoName>SME Lending</LogoName>
+          <LogoName>SME Lending Platform</LogoName>
         </BrandLogo>
 
         <BrandHero>

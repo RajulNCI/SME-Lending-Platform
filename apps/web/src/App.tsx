@@ -22,7 +22,7 @@ const AdminDashboard = () => (
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
-      <GlobalStyles />
+      <GlobalStyles theme={theme} />
       <BrowserRouter>
         <Routes>
           {/* Auth */}
