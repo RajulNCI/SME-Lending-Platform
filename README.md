@@ -10,13 +10,13 @@ SEPA instant payments, and full EU regulatory compliance.
 
 ## What CreditCore does
 
-| Capability | Spec |
-|---|---|
-| SME loan underwriting | < 500 ms, STP ≥ 70% |
-| SEPA Instant Credit Transfer | ≤ 10 seconds, 24/7/365 |
-| SEPA Direct Debit | Full mandate lifecycle + R-transaction handling |
-| Decision explainability | SHAP reason codes, immutable audit trail |
-| Regulatory coverage | EU AI Act, GDPR Art. 22, EBA, DORA, IFRS 9, CCR/AnaCredit |
+| Capability                   | Spec                                                      |
+| ---------------------------- | --------------------------------------------------------- |
+| SME loan underwriting        | < 500 ms, STP ≥ 70%                                       |
+| SEPA Instant Credit Transfer | ≤ 10 seconds, 24/7/365                                    |
+| SEPA Direct Debit            | Full mandate lifecycle + R-transaction handling           |
+| Decision explainability      | SHAP reason codes, immutable audit trail                  |
+| Regulatory coverage          | EU AI Act, GDPR Art. 22, EBA, DORA, IFRS 9, CCR/AnaCredit |
 
 ---
 
@@ -75,23 +75,23 @@ creditcore/                              ← monorepo root (Turborepo + pnpm)
 
 ## Tech stack
 
-| Layer | Technology | Reason |
-|---|---|---|
-| Frontend | React 18, Vite, TypeScript | Fast DX, strong types, ecosystem |
-| Styling | CSS custom properties + design tokens | Trust Navy theme, zero runtime cost |
-| State | Zustand | Lightweight, no boilerplate |
-| Backend | Python 3.12, FastAPI | Async, auto OpenAPI docs, type-safe |
-| ORM / migrations | SQLAlchemy 2 + Alembic | Async support, robust migrations |
-| Database | PostgreSQL 16 (AWS RDS) | ACID, JSONB for audit payloads |
-| Auth | OAuth 2.0 + OIDC, JWT | SAML/OIDC SSO, RBAC, MFA |
-| Infrastructure | Terraform + AWS ECS Fargate | Reproducible IaC, serverless containers |
-| Monorepo tooling | Turborepo + pnpm workspaces | Path-filtered builds, remote caching |
-| CI/CD | GitHub Actions | Separate FE/BE pipelines, OIDC to AWS |
-| Observability | AWS CloudWatch + X-Ray | Structured logs, distributed tracing |
-| Testing — FE | Vitest + Testing Library | Fast, coverage-native |
-| Testing — BE | pytest + pytest-asyncio | Async test support, fixtures |
-| Static analysis | ESLint, Ruff, Mypy, Bandit | Lint + types + security per language |
-| Secret scanning | Gitleaks | Blocks secrets before they land in git |
+| Layer            | Technology                            | Reason                                  |
+| ---------------- | ------------------------------------- | --------------------------------------- |
+| Frontend         | React 18, Vite, TypeScript            | Fast DX, strong types, ecosystem        |
+| Styling          | CSS custom properties + design tokens | Trust Navy theme, zero runtime cost     |
+| State            | Zustand                               | Lightweight, no boilerplate             |
+| Backend          | Python 3.12, FastAPI                  | Async, auto OpenAPI docs, type-safe     |
+| ORM / migrations | SQLAlchemy 2 + Alembic                | Async support, robust migrations        |
+| Database         | PostgreSQL 16 (AWS RDS)               | ACID, JSONB for audit payloads          |
+| Auth             | OAuth 2.0 + OIDC, JWT                 | SAML/OIDC SSO, RBAC, MFA                |
+| Infrastructure   | Terraform + AWS ECS Fargate           | Reproducible IaC, serverless containers |
+| Monorepo tooling | Turborepo + pnpm workspaces           | Path-filtered builds, remote caching    |
+| CI/CD            | GitHub Actions                        | Separate FE/BE pipelines, OIDC to AWS   |
+| Observability    | AWS CloudWatch + X-Ray                | Structured logs, distributed tracing    |
+| Testing — FE     | Vitest + Testing Library              | Fast, coverage-native                   |
+| Testing — BE     | pytest + pytest-asyncio               | Async test support, fixtures            |
+| Static analysis  | ESLint, Ruff, Mypy, Bandit            | Lint + types + security per language    |
+| Secret scanning  | Gitleaks                              | Blocks secrets before they land in git  |
 
 ---
 
@@ -198,25 +198,25 @@ CI/CD authenticates via OIDC — no access keys stored in GitHub secrets.
 
 ## Architecture Decision Records
 
-| # | Decision | Status |
-|---|---|---|
-| [ADR-001](docs/adr/ADR-001-monorepo.md) | Monorepo with Turborepo | Accepted |
+| #                                                 | Decision                | Status   |
+| ------------------------------------------------- | ----------------------- | -------- |
+| [ADR-001](docs/adr/ADR-001-monorepo.md)           | Monorepo with Turborepo | Accepted |
 | [ADR-002](docs/adr/ADR-002-branching-strategy.md) | Trunk-based development | Accepted |
-| [ADR-003](docs/adr/ADR-003-aws-labrole.md) | AWS LabRole constraints | Accepted |
+| [ADR-003](docs/adr/ADR-003-aws-labrole.md)        | AWS LabRole constraints | Accepted |
 
 ---
 
 ## Regulatory coverage
 
-| Regulation | Implementation summary |
-|---|---|
-| EU AI Act Annex III | Model cards, conformity packages, drift monitoring (PSI), human oversight |
-| GDPR Article 22 | Explainability endpoint, 30-day review SLA, appeal workflow |
-| EBA Loan Origination | Creditworthiness storage, pricing audit trail, EWI cases |
-| DORA | RTO ≤ 4h / RPO ≤ 1h, major incident workflow, TPRM register |
-| IFRS 9 | Stage 1/2/3 classification, scenario-weighted ECL |
-| CCR / AnaCredit | Monthly auto-submissions, < 1% error rate |
-| SEPA SCT Inst / SDD | ≤ 10s payouts, mandate lifecycle, R-transaction handling |
+| Regulation           | Implementation summary                                                    |
+| -------------------- | ------------------------------------------------------------------------- |
+| EU AI Act Annex III  | Model cards, conformity packages, drift monitoring (PSI), human oversight |
+| GDPR Article 22      | Explainability endpoint, 30-day review SLA, appeal workflow               |
+| EBA Loan Origination | Creditworthiness storage, pricing audit trail, EWI cases                  |
+| DORA                 | RTO ≤ 4h / RPO ≤ 1h, major incident workflow, TPRM register               |
+| IFRS 9               | Stage 1/2/3 classification, scenario-weighted ECL                         |
+| CCR / AnaCredit      | Monthly auto-submissions, < 1% error rate                                 |
+| SEPA SCT Inst / SDD  | ≤ 10s payouts, mandate lifecycle, R-transaction handling                  |
 
 ---
 

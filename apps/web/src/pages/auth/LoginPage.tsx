@@ -10,9 +10,9 @@ const fadeInUp = keyframes`
 
 // ─── Responsive helpers ───────────────────────────────────────────────────────
 // Mobile first: base styles = mobile, then scale up
-const sm  = (css: string) => `@media (min-width: 640px)  { ${css} }`;
-const md  = (css: string) => `@media (min-width: 768px)  { ${css} }`;
-const lg  = (css: string) => `@media (min-width: 1024px) { ${css} }`;
+const sm = (css: string) => `@media (min-width: 640px)  { ${css} }`;
+const md = (css: string) => `@media (min-width: 768px)  { ${css} }`;
+const lg = (css: string) => `@media (min-width: 1024px) { ${css} }`;
 
 // ─── Page shell ───────────────────────────────────────────────────────────────
 const Page = styled.div`
@@ -89,7 +89,7 @@ const BrandHeadline = styled.h1`
 
 const BrandSub = styled.p`
   font-size: 1rem;
-  color: #85B7EB;
+  color: #85b7eb;
   line-height: 1.75;
   max-width: 380px;
 `;
@@ -101,7 +101,7 @@ const Stats = styled.div`
 `;
 
 const Stat = styled.div`
-  border-top: 1px solid #1A56A0;
+  border-top: 1px solid #1a56a0;
   padding-top: 1rem;
 `;
 
@@ -114,7 +114,7 @@ const StatValue = styled.div`
 
 const StatLabel = styled.div`
   font-size: 0.75rem;
-  color: #85B7EB;
+  color: #85b7eb;
   margin-top: 0.25rem;
 `;
 
@@ -138,13 +138,13 @@ const FormCard = styled.div`
 `;
 
 // ─── Mobile top bar (visible only on mobile) ──────────────────────────────────
-const MobileHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  ${md('display: none;')}
-`;
+// const MobileHeader = styled.div`
+//   display: flex;
+//   align-items: center;
+//   gap: 0.75rem;
+//   margin-bottom: 2rem;
+//   ${md('display: none;')}
+// `;
 
 const MobileBrand = styled.div`
   background: ${({ theme }) => theme.colors.primary[800]};
@@ -198,10 +198,8 @@ const RoleBtn = styled.button<{ $active: boolean }>`
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.15s ease;
-  background: ${({ $active, theme }) =>
-    $active ? theme.colors.primary[800] : 'transparent'};
-  color: ${({ $active, theme }) =>
-    $active ? '#fff' : theme.colors.text.secondary};
+  background: ${({ $active, theme }) => ($active ? theme.colors.primary[800] : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? '#fff' : theme.colors.text.secondary)};
   /* bigger touch target */
   min-height: 40px;
 `;
@@ -224,16 +222,19 @@ const Input = styled.input<{ $error?: boolean }>`
   /* 48px height — better touch target (Apple HIG recommends 44pt min) */
   height: 48px;
   padding: 0 1rem;
-  border: 1.5px solid ${({ $error, theme }) =>
-    $error ? theme.colors.error : theme.colors.border};
+  border: 1.5px solid ${({ $error, theme }) => ($error ? theme.colors.error : theme.colors.border)};
   border-radius: ${({ theme }) => theme.radii.md};
   /* always 16px+ to prevent iOS auto-zoom */
   font-size: 16px;
   color: ${({ theme }) => theme.colors.text.primary};
   background: ${({ theme }) => theme.colors.white};
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   -webkit-appearance: none;
-  &::placeholder { color: ${({ theme }) => theme.colors.gray[400]}; }
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.gray[400]};
+  }
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary[600]};
@@ -262,7 +263,9 @@ const PasswordToggle = styled.button`
   /* bigger tap area */
   padding: 0.5rem;
   margin: -0.5rem;
-  &:hover { color: ${({ theme }) => theme.colors.primary[600]}; }
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary[600]};
+  }
 `;
 
 const Row = styled.div`
@@ -283,7 +286,9 @@ const CheckLabel = styled.label`
   cursor: pointer;
   /* bigger tap area */
   padding: 0.25rem 0;
-  input { accent-color: ${({ theme }) => theme.colors.primary[800]}; }
+  input {
+    accent-color: ${({ theme }) => theme.colors.primary[800]};
+  }
 `;
 
 const ForgotLink = styled(Link)`
@@ -303,13 +308,19 @@ const SubmitBtn = styled.button<{ $loading?: boolean }>`
   font-size: 1rem;
   font-weight: 600;
   font-family: ${({ theme }) => theme.fonts.heading};
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
   opacity: ${({ $loading }) => ($loading ? 0.7 : 1)};
   cursor: ${({ $loading }) => ($loading ? 'not-allowed' : 'pointer')};
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  &:hover:not(:disabled) { background: ${({ theme }) => theme.colors.primary[600]}; }
-  &:active:not(:disabled) { transform: scale(0.98); }
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.primary[600]};
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
 `;
 
 const Divider = styled.div`
@@ -322,7 +333,8 @@ const Divider = styled.div`
     color: ${({ theme }) => theme.colors.text.muted};
     white-space: nowrap;
   }
-  &::before, &::after {
+  &::before,
+  &::after {
     content: '';
     flex: 1;
     height: 1px;
@@ -342,12 +354,12 @@ const RegisterLink = styled.p`
 `;
 
 const AlertBox = styled.div`
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: ${({ theme }) => theme.radii.md};
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #B91C1C;
+  color: #b91c1c;
   margin-bottom: 1.25rem;
 `;
 
@@ -359,17 +371,22 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState<LoginFormData>({
-    email: '', password: '', role: 'user', rememberMe: false,
+    email: '',
+    password: '',
+    role: 'user',
+    rememberMe: false,
   });
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof LoginFormData, string>>
-  >({});
-
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
+  const signInLabel = role === 'admin' ? 'Sign in as admin' : 'Sign in';
+  const buttonLabel = loading ? 'Signing in…' : signInLabel;
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
     if (fieldErrors[name as keyof LoginFormData])
-      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const validate = (): boolean => {
@@ -388,7 +405,7 @@ const LoginPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise((r) => setTimeout(r, 1200));
       navigate(role === 'admin' ? '/admin/dashboard' : '/dashboard');
     } catch {
       setError('Invalid email or password. Please try again.');
@@ -412,17 +429,29 @@ const LoginPage: React.FC = () => {
           <LogoName>SME Lending Platform</LogoName>
         </BrandLogo>
         <BrandHero>
-          <BrandHeadline>Fast, fair credit<br />for growing businesses</BrandHeadline>
+          <BrandHeadline>
+            Fast, fair credit
+            <br />
+            for growing businesses
+          </BrandHeadline>
           <BrandSub>
-            Get an instant credit decision in under 500ms.
-            Automated underwriting, transparent pricing, and full
-            regulatory compliance built in.
+            Get an instant credit decision in under 500ms. Automated underwriting, transparent
+            pricing, and full regulatory compliance built in.
           </BrandSub>
         </BrandHero>
         <Stats>
-          <Stat><StatValue>500ms</StatValue><StatLabel>Decision time</StatLabel></Stat>
-          <Stat><StatValue>70%+</StatValue><StatLabel>Straight-through</StatLabel></Stat>
-          <Stat><StatValue>99.9%</StatValue><StatLabel>Uptime SLA</StatLabel></Stat>
+          <Stat>
+            <StatValue>500ms</StatValue>
+            <StatLabel>Decision time</StatLabel>
+          </Stat>
+          <Stat>
+            <StatValue>70%+</StatValue>
+            <StatLabel>Straight-through</StatLabel>
+          </Stat>
+          <Stat>
+            <StatValue>99.9%</StatValue>
+            <StatLabel>Uptime SLA</StatLabel>
+          </Stat>
         </Stats>
       </Brand>
 
@@ -437,25 +466,44 @@ const LoginPage: React.FC = () => {
           </FormHeader>
 
           <RoleToggle>
-            <RoleBtn type="button" $active={role === 'user'}
-              onClick={() => { setRole('user'); setError(''); }}>
+            <RoleBtn
+              type="button"
+              $active={role === 'user'}
+              onClick={() => {
+                setRole('user');
+                setError('');
+              }}
+            >
               Business user
             </RoleBtn>
-            <RoleBtn type="button" $active={role === 'admin'}
-              onClick={() => { setRole('admin'); setError(''); }}>
+            <RoleBtn
+              type="button"
+              $active={role === 'admin'}
+              onClick={() => {
+                setRole('admin');
+                setError('');
+              }}
+            >
               Administrator
             </RoleBtn>
           </RoleToggle>
 
           {error && <AlertBox>{error}</AlertBox>}
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+          >
             <Field>
               <Label htmlFor="email">Email address</Label>
               <Input
-                id="email" name="email" type="email"
-                autoComplete="email" placeholder="you@company.com"
-                value={form.email} onChange={handleChange}
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@company.com"
+                value={form.email}
+                onChange={handleChange}
                 $error={!!fieldErrors.email}
               />
               {fieldErrors.email && <ErrorMsg>{fieldErrors.email}</ErrorMsg>}
@@ -465,17 +513,21 @@ const LoginPage: React.FC = () => {
               <Label htmlFor="password">Password</Label>
               <PasswordWrapper>
                 <Input
-                  id="password" name="password"
+                  id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="Min. 8 characters"
-                  value={form.password} onChange={handleChange}
+                  value={form.password}
+                  onChange={handleChange}
                   $error={!!fieldErrors.password}
                   style={{ paddingRight: '64px' }}
                 />
-                <PasswordToggle type="button"
-                  onClick={() => setShowPassword(p => !p)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                <PasswordToggle
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
                   {showPassword ? 'Hide' : 'Show'}
                 </PasswordToggle>
               </PasswordWrapper>
@@ -484,22 +536,32 @@ const LoginPage: React.FC = () => {
 
             <Row>
               <CheckLabel>
-                <input type="checkbox" name="rememberMe"
-                  checked={form.rememberMe} onChange={handleChange} />
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  checked={form.rememberMe}
+                  onChange={handleChange}
+                />{' '}
+                {/* NOSONAR */}
                 Remember me
               </CheckLabel>
               <ForgotLink to="/auth/forgot-password">Forgot password?</ForgotLink>
             </Row>
 
-            <SubmitBtn type="submit" $loading={loading} disabled={loading}>
-              {loading ? 'Signing in…' : `Sign in${role === 'admin' ? ' as admin' : ''}`}
+            <SubmitBtn
+              type="submit"
+              $loading={loading}
+              disabled={loading}
+            >
+              {buttonLabel}
             </SubmitBtn>
           </form>
 
-          <Divider><span>New to SME Lending?</span></Divider>
+          <Divider>
+            <span>New to SME Lending?</span>
+          </Divider>
           <RegisterLink>
-            Don't have an account?{' '}
-            <Link to="/auth/register">Create one free</Link>
+            Don't have an account? <Link to="/auth/register">Create one free</Link>
           </RegisterLink>
         </FormCard>
       </FormPanel>

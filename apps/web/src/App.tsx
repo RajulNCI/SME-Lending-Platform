@@ -23,12 +23,40 @@ const App: React.FC = () => (
     <GlobalStyles />
     <BrowserRouter>
       <Routes>
-        <Route path="/auth/login"      element={<LoginPage />} />
-        <Route path="/auth/register"   element={<RegisterPage />} />
-        <Route path="/dashboard"       element={<Dashboard />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/"  element={<Navigate to="/auth/login" replace />} />
-        <Route path="*"  element={<Navigate to="/auth/login" replace />} />
+        <Route
+          path="/auth/login"
+          element={<LoginPage />}
+        />
+        <Route
+          path="/auth/register"
+          element={<RegisterPage />}
+        />
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
+        <Route
+          path="/admin/dashboard"
+          element={<AdminDashboard />}
+        />
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/auth/login"
+              replace
+            />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/auth/login"
+              replace
+            />
+          }
+        />
       </Routes>
     </BrowserRouter>
   </ThemeProvider>

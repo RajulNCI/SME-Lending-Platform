@@ -24,7 +24,9 @@ const MobileBrand = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  @media (min-width: 768px) { display: none; }
+  @media (min-width: 768px) {
+    display: none;
+  }
 `;
 
 const MobileBrandName = styled.span`
@@ -60,8 +62,10 @@ const Content = styled.main`
   align-items: flex-start;
   justify-content: center;
   padding: 1.5rem 1rem 3rem;
-  @media (min-width: 640px) { padding: 2rem 1.5rem 3rem; }
-  @media (min-width: 768px) { 
+  @media (min-width: 640px) {
+    padding: 2rem 1.5rem 3rem;
+  }
+  @media (min-width: 768px) {
     align-items: center;
     padding: 3rem 2rem;
     min-height: 100vh;
@@ -76,8 +80,12 @@ const Card = styled.div`
   width: 100%;
   max-width: 560px;
   animation: ${fadeInUp} 0.35s ease both;
-  @media (min-width: 640px) { padding: 2.5rem 2rem; }
-  @media (min-width: 768px) { padding: 3rem 2.5rem; }
+  @media (min-width: 640px) {
+    padding: 2.5rem 2rem;
+  }
+  @media (min-width: 768px) {
+    padding: 3rem 2.5rem;
+  }
 `;
 
 // Desktop logo (hidden on mobile — shown in top bar instead)
@@ -102,7 +110,9 @@ const LogoName = styled.span`
 const Header = styled.div`
   text-align: center;
   margin-bottom: 1.5rem;
-  @media (min-width: 768px) { margin-bottom: 2rem; }
+  @media (min-width: 768px) {
+    margin-bottom: 2rem;
+  }
 `;
 
 const Title = styled.h1`
@@ -110,7 +120,9 @@ const Title = styled.h1`
   font-weight: 700;
   color: ${({ theme }) => theme.colors.primary[800]};
   margin-bottom: 0.375rem;
-  @media (min-width: 640px) { font-size: 1.875rem; }
+  @media (min-width: 640px) {
+    font-size: 1.875rem;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -137,10 +149,8 @@ const RoleBtn = styled.button<{ $active: boolean }>`
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  background: ${({ $active, theme }) =>
-    $active ? theme.colors.primary[800] : 'transparent'};
-  color: ${({ $active, theme }) =>
-    $active ? '#fff' : theme.colors.text.secondary};
+  background: ${({ $active, theme }) => ($active ? theme.colors.primary[800] : 'transparent')};
+  color: ${({ $active, theme }) => ($active ? '#fff' : theme.colors.text.secondary)};
 `;
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
@@ -172,15 +182,18 @@ const Input = styled.input<{ $error?: boolean }>`
   width: 100%;
   height: 48px;
   padding: 0 1rem;
-  border: 1.5px solid ${({ $error, theme }) =>
-    $error ? theme.colors.error : theme.colors.border};
+  border: 1.5px solid ${({ $error, theme }) => ($error ? theme.colors.error : theme.colors.border)};
   border-radius: ${({ theme }) => theme.radii.md};
   font-size: 16px;
   color: ${({ theme }) => theme.colors.text.primary};
   background: ${({ theme }) => theme.colors.white};
   -webkit-appearance: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  &::placeholder { color: ${({ theme }) => theme.colors.gray[400]}; }
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.gray[400]};
+  }
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary[600]};
@@ -209,7 +222,9 @@ const PasswordToggle = styled.button`
   padding: 0.5rem;
   margin: -0.5rem;
   -webkit-tap-highlight-color: transparent;
-  &:hover { color: ${({ theme }) => theme.colors.primary[600]}; }
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary[600]};
+  }
 `;
 
 // ─── Password strength ────────────────────────────────────────────────────────
@@ -256,7 +271,10 @@ const CheckRow = styled.label`
     width: 16px;
     height: 16px;
   }
-  a { color: ${({ theme }) => theme.colors.text.link}; font-weight: 500; }
+  a {
+    color: ${({ theme }) => theme.colors.text.link};
+    font-weight: 500;
+  }
 `;
 
 // ─── Submit ───────────────────────────────────────────────────────────────────
@@ -269,13 +287,19 @@ const SubmitBtn = styled.button<{ $loading?: boolean }>`
   font-size: 1rem;
   font-weight: 600;
   font-family: ${({ theme }) => theme.fonts.heading};
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
   opacity: ${({ $loading }) => ($loading ? 0.7 : 1)};
   cursor: ${({ $loading }) => ($loading ? 'not-allowed' : 'pointer')};
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  &:hover:not(:disabled) { background: ${({ theme }) => theme.colors.primary[600]}; }
-  &:active:not(:disabled) { transform: scale(0.98); }
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.primary[600]};
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
 `;
 
 const LoginLink = styled.p`
@@ -290,12 +314,12 @@ const LoginLink = styled.p`
 `;
 
 const AlertBox = styled.div`
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: ${({ theme }) => theme.radii.md};
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #B91C1C;
+  color: #b91c1c;
   margin-bottom: 1.25rem;
 `;
 
@@ -304,7 +328,7 @@ const getStrength = (pw: string): number => {
   let s = 0;
   if (pw.length >= 8) s++;
   if (/[A-Z]/.test(pw)) s++;
-  if (/[0-9]/.test(pw)) s++;
+  if (/\d/.test(pw)) s++;
   if (/[^A-Za-z0-9]/.test(pw)) s++;
   return s;
 };
@@ -318,20 +342,29 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState<RegisterFormData>({
-    firstName: '', lastName: '', email: '', password: '',
-    confirmPassword: '', companyName: '', role: 'user', acceptTerms: false,
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    companyName: '',
+    role: 'user',
+    acceptTerms: false,
   });
-  const [fieldErrors, setFieldErrors] = useState<
-    Partial<Record<keyof RegisterFormData, string>>
-  >({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>(
+    {}
+  );
 
   const strength = getStrength(form.password);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
     if (fieldErrors[name as keyof RegisterFormData])
-      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const validate = (): boolean => {
@@ -356,7 +389,7 @@ const RegisterPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise((r) => setTimeout(r, 1200));
       navigate('/auth/login?registered=true');
     } catch {
       setError('Registration failed. Please try again.');
@@ -389,74 +422,120 @@ const RegisterPage: React.FC = () => {
           </Header>
 
           <RoleToggle>
-            <RoleBtn type="button" $active={role === 'user'} onClick={() => setRole('user')}>
+            <RoleBtn
+              type="button"
+              $active={role === 'user'}
+              onClick={() => setRole('user')}
+            >
               Business user
             </RoleBtn>
-            <RoleBtn type="button" $active={role === 'admin'} onClick={() => setRole('admin')}>
+            <RoleBtn
+              type="button"
+              $active={role === 'admin'}
+              onClick={() => setRole('admin')}
+            >
               Administrator
             </RoleBtn>
           </RoleToggle>
 
           {error && <AlertBox>{error}</AlertBox>}
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+          >
             <Grid2>
               <Field>
                 <Label htmlFor="firstName">First name</Label>
-                <Input id="firstName" name="firstName" type="text"
-                  autoComplete="given-name" placeholder="Jane"
-                  value={form.firstName} onChange={handleChange}
-                  $error={!!fieldErrors.firstName} />
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  autoComplete="given-name"
+                  placeholder="Jane"
+                  value={form.firstName}
+                  onChange={handleChange}
+                  $error={!!fieldErrors.firstName}
+                />
                 {fieldErrors.firstName && <ErrorMsg>{fieldErrors.firstName}</ErrorMsg>}
               </Field>
               <Field>
                 <Label htmlFor="lastName">Last name</Label>
-                <Input id="lastName" name="lastName" type="text"
-                  autoComplete="family-name" placeholder="Smith"
-                  value={form.lastName} onChange={handleChange}
-                  $error={!!fieldErrors.lastName} />
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  autoComplete="family-name"
+                  placeholder="Smith"
+                  value={form.lastName}
+                  onChange={handleChange}
+                  $error={!!fieldErrors.lastName}
+                />
                 {fieldErrors.lastName && <ErrorMsg>{fieldErrors.lastName}</ErrorMsg>}
               </Field>
             </Grid2>
 
             <Field>
               <Label htmlFor="email">Work email</Label>
-              <Input id="email" name="email" type="email"
-                autoComplete="email" placeholder="jane@company.com"
-                value={form.email} onChange={handleChange}
-                $error={!!fieldErrors.email} />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="jane@company.com"
+                value={form.email}
+                onChange={handleChange}
+                $error={!!fieldErrors.email}
+              />
               {fieldErrors.email && <ErrorMsg>{fieldErrors.email}</ErrorMsg>}
             </Field>
 
             <Field>
               <Label htmlFor="companyName">Company name</Label>
-              <Input id="companyName" name="companyName" type="text"
-                autoComplete="organization" placeholder="Acme Ltd"
-                value={form.companyName} onChange={handleChange}
-                $error={!!fieldErrors.companyName} />
+              <Input
+                id="companyName"
+                name="companyName"
+                type="text"
+                autoComplete="organization"
+                placeholder="Acme Ltd"
+                value={form.companyName}
+                onChange={handleChange}
+                $error={!!fieldErrors.companyName}
+              />
               {fieldErrors.companyName && <ErrorMsg>{fieldErrors.companyName}</ErrorMsg>}
             </Field>
 
             <Field>
               <Label htmlFor="password">Password</Label>
               <PasswordWrapper>
-                <Input id="password" name="password"
+                <Input
+                  id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password" placeholder="Min. 8 characters"
-                  value={form.password} onChange={handleChange}
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
+                  value={form.password}
+                  onChange={handleChange}
                   $error={!!fieldErrors.password}
-                  style={{ paddingRight: '64px' }} />
-                <PasswordToggle type="button"
-                  onClick={() => setShowPassword(p => !p)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  style={{ paddingRight: '64px' }}
+                />
+                <PasswordToggle
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
                   {showPassword ? 'Hide' : 'Show'}
                 </PasswordToggle>
               </PasswordWrapper>
               {form.password && (
                 <>
                   <StrengthBar>
-                    {[1,2,3,4].map(i => (
-                      <StrengthSegment key={i} $filled={strength >= i} $level={strength} />
+                    {[1, 2, 3, 4].map((i) => (
+                      <StrengthSegment
+                        key={i}
+                        $filled={strength >= i}
+                        $level={strength}
+                      />
                     ))}
                   </StrengthBar>
                   <StrengthLabel>{strengthLabels[strength]}</StrengthLabel>
@@ -467,17 +546,26 @@ const RegisterPage: React.FC = () => {
 
             <Field>
               <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input id="confirmPassword" name="confirmPassword"
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
                 type={showPassword ? 'text' : 'password'}
-                autoComplete="new-password" placeholder="Repeat your password"
-                value={form.confirmPassword} onChange={handleChange}
-                $error={!!fieldErrors.confirmPassword} />
+                autoComplete="new-password"
+                placeholder="Repeat your password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                $error={!!fieldErrors.confirmPassword}
+              />
               {fieldErrors.confirmPassword && <ErrorMsg>{fieldErrors.confirmPassword}</ErrorMsg>}
             </Field>
 
             <CheckRow>
-              <input type="checkbox" name="acceptTerms"
-                checked={form.acceptTerms} onChange={handleChange} />
+              <input
+                type="checkbox"
+                name="acceptTerms"
+                checked={form.acceptTerms}
+                onChange={handleChange}
+              />
               <span>
                 I agree to the <Link to="/terms">Terms of Service</Link> and{' '}
                 <Link to="/privacy">Privacy Policy</Link>
@@ -489,7 +577,11 @@ const RegisterPage: React.FC = () => {
               </ErrorMsg>
             )}
 
-            <SubmitBtn type="submit" $loading={loading} disabled={loading}>
+            <SubmitBtn
+              type="submit"
+              $loading={loading}
+              disabled={loading}
+            >
               {loading ? 'Creating account…' : 'Create account'}
             </SubmitBtn>
           </form>

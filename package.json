@@ -1,8 +1,8 @@
 {
-  "name": "creditcore",
+  "name": "smelendingplatform",
   "private": true,
   "version": "0.1.0",
-  "description": "CreditCore — All-in-one SME Credit Platform",
+  "description": "SME Lending Platform — All-in-one SME Credit Platform",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -28,14 +28,14 @@
     "typescript": "^5.4.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
+    "apps/web/src/**/*.{ts,tsx}": [
+      "eslint --fix --config apps/web/.eslintrc.json",
       "prettier --write"
     ],
-    "*.{json,md,css,yml}": [
+    "**/*.{json,md,css,yml}": [
       "prettier --write"
     ],
-    "*.py": [
+    "**/*.py": [
       "ruff check --fix",
       "ruff format"
     ]

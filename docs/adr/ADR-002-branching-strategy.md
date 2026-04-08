@@ -21,14 +21,14 @@ v1.2.0 tag ───────────────────────
 
 ## Branch naming
 
-| Pattern | Purpose | Example |
-|---|---|---|
-| `feature/<scope>/<slug>` | New work | `feature/api/sdd-mandate-lifecycle` |
-| `fix/<scope>/<slug>` | Bug fix | `fix/web/decision-card-overflow` |
-| `refactor/<scope>/<slug>` | Refactor | `refactor/api/ecl-staging-logic` |
-| `infra/<slug>` | Terraform | `infra/add-waf-rules` |
-| `ci/<slug>` | CI/CD | `ci/add-a11y-check` |
-| `docs/<slug>` | Docs only | `docs/update-api-spec` |
+| Pattern                   | Purpose   | Example                             |
+| ------------------------- | --------- | ----------------------------------- |
+| `feature/<scope>/<slug>`  | New work  | `feature/api/sdd-mandate-lifecycle` |
+| `fix/<scope>/<slug>`      | Bug fix   | `fix/web/decision-card-overflow`    |
+| `refactor/<scope>/<slug>` | Refactor  | `refactor/api/ecl-staging-logic`    |
+| `infra/<slug>`            | Terraform | `infra/add-waf-rules`               |
+| `ci/<slug>`               | CI/CD     | `ci/add-a11y-check`                 |
+| `docs/<slug>`             | Docs only | `docs/update-api-spec`              |
 
 ## Rules
 
@@ -52,10 +52,10 @@ ci(api): add pip-audit to pipeline
 
 ## Environment mapping
 
-| Trigger | Deploys to | Approval required |
-|---|---|---|
-| Push to `main` | Staging | No (CI passes → auto) |
-| Tag `v*` | Production | Yes (GitHub environment rule) |
+| Trigger        | Deploys to | Approval required             |
+| -------------- | ---------- | ----------------------------- |
+| Push to `main` | Staging    | No (CI passes → auto)         |
+| Tag `v*`       | Production | Yes (GitHub environment rule) |
 
 ## Why trunk-based?
 

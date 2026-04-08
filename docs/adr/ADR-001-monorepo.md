@@ -9,6 +9,7 @@
 ## Context
 
 CreditCore has multiple deployable units:
+
 - `apps/web` — React 18 + TypeScript frontend
 - `apps/api` — Python 3.12 + FastAPI backend
 - `packages/shared-types` — TypeScript types shared across apps
@@ -23,13 +24,13 @@ We must decide: **monorepo** (one repo, all code) or **polyrepo** (one repo per 
 
 ## Reasoning
 
-| Concern | Monorepo | Polyrepo |
-|---|---|---|
-| Shared types | Single source of truth | Requires npm publishing or submodules |
-| Cross-cutting changes | One PR | Multiple PRs across repos |
-| CI/CD | Turborepo task graph + path filters | Separate pipelines, hard to coordinate |
-| Onboarding | `git clone` + `pnpm install` | Multiple clones, multiple setups |
-| Deploy independence | Docker + ECS keeps deploys independent | Independent by default |
+| Concern               | Monorepo                               | Polyrepo                               |
+| --------------------- | -------------------------------------- | -------------------------------------- |
+| Shared types          | Single source of truth                 | Requires npm publishing or submodules  |
+| Cross-cutting changes | One PR                                 | Multiple PRs across repos              |
+| CI/CD                 | Turborepo task graph + path filters    | Separate pipelines, hard to coordinate |
+| Onboarding            | `git clone` + `pnpm install`           | Multiple clones, multiple setups       |
+| Deploy independence   | Docker + ECS keeps deploys independent | Independent by default                 |
 
 For a small team (2–5 engineers), developer experience and shared-code benefits outweigh monorepo overhead. Turborepo remote caching keeps builds fast.
 

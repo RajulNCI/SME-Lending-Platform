@@ -12,12 +12,12 @@ Students **cannot create new IAM roles** — this is a hard platform constraint.
 
 ## Constraints
 
-| Constraint | Impact |
-|---|---|
-| Cannot create IAM roles | Terraform must use `LabRole` for all resources |
-| Lab sessions time out | AWS credentials reset every ~4 hours |
-| No root access | Some global services (Route53 hosted zones) may need workarounds |
-| Limited service quotas | ECS Fargate, RDS instances have quota caps |
+| Constraint              | Impact                                                           |
+| ----------------------- | ---------------------------------------------------------------- |
+| Cannot create IAM roles | Terraform must use `LabRole` for all resources                   |
+| Lab sessions time out   | AWS credentials reset every ~4 hours                             |
+| No root access          | Some global services (Route53 hosted zones) may need workarounds |
+| Limited service quotas  | ECS Fargate, RDS instances have quota caps                       |
 
 ## Decisions
 
@@ -30,6 +30,7 @@ Students **cannot create new IAM roles** — this is a hard platform constraint.
 ## Credential rotation
 
 Because lab sessions expire, the team must re-export credentials before each working session:
+
 1. Open AWS Academy → Launch environment
 2. Copy `AWS Access Key ID`, `AWS Secret Access Key`, `AWS Session Token`
 3. Paste into `~/.aws/credentials` under profile `[creditcore-lab]`
