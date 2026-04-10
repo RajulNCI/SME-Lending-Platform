@@ -1,0 +1,163 @@
+{
+  "_comment": "Static content for dashboard. Dynamic values marked with __DYNAMIC__ will be replaced once APIs are integrated.",
+
+  "kpis": [
+    {
+      "id": "uptime",
+      "label": "Platform uptime",
+      "value": "99.97%",
+      "target": "≥ 99.9%",
+      "trend": "up",
+      "trendLabel": "+0.07% vs last month",
+      "icon": "◎",
+      "variant": "default",
+      "userStory": "16_observability — uptime ≥ 99.9%"
+    },
+    {
+      "id": "latency",
+      "label": "p99 decision latency",
+      "value": "312ms",
+      "target": "≤ 500ms",
+      "trend": "up",
+      "trendLabel": "−42ms vs last month",
+      "icon": "⚡",
+      "variant": "default",
+      "userStory": "16_observability — p99 latency ≤ 500ms"
+    },
+    {
+      "id": "stp_rate",
+      "label": "STP rate",
+      "value": "74.2%",
+      "target": "≥ 70%",
+      "trend": "up",
+      "trendLabel": "+2.1% vs last month",
+      "icon": "▶",
+      "variant": "default",
+      "userStory": "2_sme_underwriting — STP ≥ 70%"
+    },
+    {
+      "id": "sct_inst",
+      "label": "SCT Inst success",
+      "value": "99.6%",
+      "target": "≥ 99.5%",
+      "trend": "neutral",
+      "trendLabel": "On target",
+      "icon": "⇄",
+      "variant": "default",
+      "userStory": "payments_sepa — SCT Inst ≥ 99.5%"
+    },
+    {
+      "id": "sdd_return",
+      "label": "SDD R-transaction rate",
+      "value": "3.1%",
+      "target": "< 5%",
+      "trend": "up",
+      "trendLabel": "−0.4% vs last month",
+      "icon": "↩",
+      "variant": "default",
+      "userStory": "payments_sepa — SDD R-transaction < 5%"
+    },
+    {
+      "id": "nps",
+      "label": "NPS score",
+      "value": "52",
+      "target": "≥ 45",
+      "trend": "up",
+      "trendLabel": "+3 vs last quarter",
+      "icon": "★",
+      "variant": "navy",
+      "userStory": "16_observability — NPS ≥ 45"
+    }
+  ],
+
+  "complianceStatus": [
+    { "id": "ccr",    "label": "CCR on-time submissions", "value": "100%", "status": "success", "userStory": "16_observability — CCR on-time = 100%" },
+    { "id": "aiact",  "label": "EU AI Act audit logs",    "value": "100%", "status": "success", "userStory": "16_observability — AI Act logs = 100%" },
+    { "id": "gdpr",   "label": "GDPR Art.22 reviews <30d","value": "28/28", "status": "success", "userStory": "3_gdpr — respond within 30 days" },
+    { "id": "dora",   "label": "DORA incidents reported", "value": "2 open","status": "warning", "userStory": "8_dora — regulatory notifications" }
+  ],
+
+  "recentDecisions": [
+    {
+      "id": "DEC-2041",
+      "company": "Acme Manufacturing Ltd",
+      "amount": "€125,000",
+      "score": 72,
+      "decision": "Approved",
+      "decisionVariant": "success",
+      "latency": "298ms",
+      "modelVersion": "v2.4.1",
+      "timestamp": "2026-04-09T08:14:00Z",
+      "stage": 1
+    },
+    {
+      "id": "DEC-2040",
+      "company": "Brennan & Sons Construction",
+      "amount": "€280,000",
+      "score": 61,
+      "decision": "Referred",
+      "decisionVariant": "warning",
+      "latency": "445ms",
+      "modelVersion": "v2.4.1",
+      "timestamp": "2026-04-09T07:52:00Z",
+      "stage": 2
+    },
+    {
+      "id": "DEC-2039",
+      "company": "Tech Innovate Solutions",
+      "amount": "€55,000",
+      "score": 84,
+      "decision": "Approved",
+      "decisionVariant": "success",
+      "latency": "312ms",
+      "modelVersion": "v2.4.1",
+      "timestamp": "2026-04-09T07:31:00Z",
+      "stage": 1
+    },
+    {
+      "id": "DEC-2038",
+      "company": "Murphy's Retail Group",
+      "amount": "€400,000",
+      "score": 38,
+      "decision": "Declined",
+      "decisionVariant": "error",
+      "latency": "389ms",
+      "modelVersion": "v2.4.1",
+      "timestamp": "2026-04-09T07:09:00Z",
+      "stage": 3
+    },
+    {
+      "id": "DEC-2037",
+      "company": "Green Energy Partners",
+      "amount": "€190,000",
+      "score": 69,
+      "decision": "Approved",
+      "decisionVariant": "success",
+      "latency": "276ms",
+      "modelVersion": "v2.4.1",
+      "timestamp": "2026-04-09T06:48:00Z",
+      "stage": 1
+    }
+  ],
+
+  "portfolioSummary": {
+    "totalExposure": "€42.8M",
+    "activeLoans": 312,
+    "stage1Count": 271,
+    "stage2Count": 33,
+    "stage3Count": 8,
+    "eclTotal": "€1.24M",
+    "userStory": "7_ifrs9 — Stage 1/2/3, ECL"
+  },
+
+  "modelHealth": {
+    "currentVersion": "v2.4.1",
+    "psi": 0.04,
+    "psiStatus": "Normal",
+    "gini": 0.68,
+    "giniStatus": "Above threshold",
+    "lastValidated": "2026-03-28",
+    "nextReview": "2026-04-28",
+    "userStory": "12_model_lifecycle — PSI < 0.10, Gini threshold"
+  }
+}
