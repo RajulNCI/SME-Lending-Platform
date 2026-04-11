@@ -1,0 +1,76 @@
+{
+  "applications": [
+    {
+      "id": "FP-2025-0041", "company": "O'Brien Construction Ltd", "crn": "654821",
+      "sector": "Construction", "amount": 420000, "purpose": "Working Capital",
+      "status": "Assessment Complete", "statusVariant": "success",
+      "grade": "B1", "pd": 3.4, "dscr": 1.42, "apr": 8.5,
+      "affordability": 82, "declaredRevenue": 2840000, "actualLodgements": 2610000,
+      "freeCashFlow": 187000, "ecl12m": 6020, "submittedAt": "2025-02-18",
+      "euAiAct": "High-Risk", "hitlRequired": false,
+      "shap": [
+        { "factor": "DSCR (1.42x)", "direction": "positive", "weight": 32, "note": "Above 1.20x policy minimum" },
+        { "factor": "Revenue variance detected", "direction": "negative", "weight": 18, "note": "Declared €2.84M vs actual €2.61M" },
+        { "factor": "Sector risk — Construction", "direction": "negative", "weight": 14, "note": "Elevated cyclical risk" },
+        { "factor": "Years trading (12 yrs)", "direction": "positive", "weight": 22, "note": "Strong operating history" },
+        { "factor": "Credit history (CCR)", "direction": "positive", "weight": 14, "note": "No adverse CCR entries" }
+      ],
+      "openBanking": { "avgMonthlyCredits": 218000, "avgMonthlyDebits": 195000, "lowestBalance": 87700, "runway": "4.2 months" },
+      "ifrs9": { "stage": 1, "ecl12m": 6020, "eclLifetime": 18400, "pd": 0.034, "lgd": 0.45 }
+    },
+    {
+      "id": "FP-2025-0043", "company": "Meridian Retail Ltd", "crn": "719234",
+      "sector": "Retail", "amount": 280000, "purpose": "Working Capital",
+      "status": "HITL Mandatory", "statusVariant": "warning",
+      "grade": "C1", "pd": 8.9, "dscr": 1.18, "apr": 11.2,
+      "affordability": 64, "declaredRevenue": 1920000, "actualLodgements": 1740000,
+      "freeCashFlow": 43000, "ecl12m": 22140, "submittedAt": "2025-03-22",
+      "euAiAct": "High-Risk", "hitlRequired": true,
+      "shap": [
+        { "factor": "DSCR (1.18x)", "direction": "negative", "weight": 28, "note": "Below 1.20x policy minimum" },
+        { "factor": "Revenue variance", "direction": "negative", "weight": 22, "note": "Declared €1.92M vs actual €1.74M" },
+        { "factor": "Thin cash buffer", "direction": "negative", "weight": 19, "note": "1.8 months runway only" },
+        { "factor": "Sector — Retail (post-COVID)", "direction": "negative", "weight": 16, "note": "High e-commerce disruption risk" },
+        { "factor": "Director track record", "direction": "positive", "weight": 15, "note": "Prior successful exit" }
+      ],
+      "openBanking": { "avgMonthlyCredits": 145000, "avgMonthlyDebits": 138000, "lowestBalance": 12400, "runway": "1.8 months" },
+      "ifrs9": { "stage": 2, "ecl12m": 22140, "eclLifetime": 68900, "pd": 0.089, "lgd": 0.50 }
+    },
+    {
+      "id": "FP-2025-0040", "company": "Ferris Hospitality Group", "crn": "582017",
+      "sector": "Hospitality", "amount": 310000, "purpose": "Working Capital",
+      "status": "Flagged", "statusVariant": "error",
+      "grade": "D1", "pd": 18.4, "dscr": 0.94, "apr": 0,
+      "affordability": 41, "declaredRevenue": 1480000, "actualLodgements": 1120000,
+      "freeCashFlow": -28000, "ecl12m": 50948, "submittedAt": "2025-02-15",
+      "euAiAct": "High-Risk", "hitlRequired": true,
+      "shap": [
+        { "factor": "DSCR (0.94x)", "direction": "negative", "weight": 35, "note": "Below 1.0x — cannot service debt" },
+        { "factor": "Negative free cash flow", "direction": "negative", "weight": 28, "note": "-€28K monthly burn" },
+        { "factor": "Revenue shortfall 24%", "direction": "negative", "weight": 21, "note": "Major declared vs actual variance" },
+        { "factor": "Sector — Hospitality", "direction": "negative", "weight": 10, "note": "High post-pandemic risk" },
+        { "factor": "Assets as collateral", "direction": "positive", "weight": 6, "note": "Property offered" }
+      ],
+      "openBanking": { "avgMonthlyCredits": 93000, "avgMonthlyDebits": 121000, "lowestBalance": 5400, "runway": "0.5 months" },
+      "ifrs9": { "stage": 3, "ecl12m": 50948, "eclLifetime": 155800, "pd": 0.184, "lgd": 0.55 }
+    },
+    {
+      "id": "FP-2025-0039", "company": "GreenwayTech Solutions", "crn": "493811",
+      "sector": "IT & Technology", "amount": 90000, "purpose": "Working Capital",
+      "status": "Approved", "statusVariant": "success",
+      "grade": "A2", "pd": 1.2, "dscr": 2.18, "apr": 6.8,
+      "affordability": 94, "declaredRevenue": 980000, "actualLodgements": 962000,
+      "freeCashFlow": 124000, "ecl12m": 972, "submittedAt": "2025-02-12",
+      "euAiAct": "High-Risk", "hitlRequired": false,
+      "shap": [
+        { "factor": "DSCR (2.18x)", "direction": "positive", "weight": 30, "note": "Well above policy minimum" },
+        { "factor": "Revenue accuracy", "direction": "positive", "weight": 24, "note": "< 2% declared vs actual variance" },
+        { "factor": "Sector — Technology", "direction": "positive", "weight": 20, "note": "Low cyclical risk" },
+        { "factor": "Strong cash position", "direction": "positive", "weight": 18, "note": "6.8 months runway" },
+        { "factor": "Clean CCR history", "direction": "positive", "weight": 8, "note": "No adverse entries" }
+      ],
+      "openBanking": { "avgMonthlyCredits": 80000, "avgMonthlyDebits": 43000, "lowestBalance": 91300, "runway": "6.8 months" },
+      "ifrs9": { "stage": 1, "ecl12m": 972, "eclLifetime": 2916, "pd": 0.012, "lgd": 0.40 }
+    }
+  ]
+}
