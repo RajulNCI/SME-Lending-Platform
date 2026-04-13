@@ -35,18 +35,24 @@ const DecisionBtns = styled.div`
   gap: 0.75rem;
   margin-bottom: 0.875rem;
 `;
-const DecisionBtn = styled.button<{ $sel: boolean; $v: 'approve' | 'refer' | 'decline' }>`
+const DecisionBtn = styled.button<{ $sel: boolean; $v: 'approved' | 'referred' | 'declined' }>`
   padding: 0.625rem;
   border-radius: 8px;
   font-size: 0.8125rem;
   font-weight: 600;
   border: 2px solid
     ${({ $sel, $v }) =>
-      !$sel ? '#E2E8F0' : $v === 'approve' ? '#1D9E75' : $v === 'refer' ? '#BA7517' : '#E24B4A'};
+      !$sel
+        ? '#E2E8F0'
+        : $v === 'approved'
+          ? '#1D9E75'
+          : $v === 'referred'
+            ? '#BA7517'
+            : '#E24B4A'};
   background: ${({ $sel, $v }) =>
-    !$sel ? '#fff' : $v === 'approve' ? '#E1F5EE' : $v === 'refer' ? '#FAEEDA' : '#FCEBEB'};
+    !$sel ? '#fff' : $v === 'approved' ? '#E1F5EE' : $v === 'referred' ? '#FAEEDA' : '#FCEBEB'};
   color: ${({ $sel, $v }) =>
-    !$sel ? '#718096' : $v === 'approve' ? '#0F6E56' : $v === 'refer' ? '#854F0B' : '#A32D2D'};
+    !$sel ? '#718096' : $v === 'approved' ? '#0F6E56' : $v === 'referred' ? '#854F0B' : '#A32D2D'};
   cursor: pointer;
   transition: all 0.15s;
 `;
@@ -84,9 +90,9 @@ const QueuePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
-  const [decisionOutcome, setDecisionOutcome] = useState<'approve' | 'refer' | 'decline' | null>(
-    null
-  );
+  const [decisionOutcome, setDecisionOutcome] = useState<
+    'approved' | 'referred' | 'declined' | null
+  >(null);
   const [rationale, setRationale] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<string[]>([]);
@@ -389,16 +395,16 @@ const QueuePage: React.FC = () => {
                                   Make decision — {appId}
                                 </p>
                                 <DecisionBtns>
-                                  {(['approve', 'refer', 'decline'] as const).map((o) => (
+                                  {(['approved', 'referred', 'declined'] as const).map((o) => (
                                     <DecisionBtn
                                       key={o}
                                       $sel={decisionOutcome === o}
                                       $v={o}
                                       onClick={() => setDecisionOutcome(o)}
                                     >
-                                      {o === 'approve'
+                                      {o === 'approved'
                                         ? '✓ Approve'
-                                        : o === 'refer'
+                                        : o === 'referred'
                                           ? '→ Refer'
                                           : '✗ Decline'}
                                     </DecisionBtn>
