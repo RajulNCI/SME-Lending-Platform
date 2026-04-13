@@ -1,0 +1,28 @@
+"""
+Structured JSON logging using structlog.
+Every log entry includes: timestamp, level, correlation_id, service.
+"""
+import logging
+import structlog
+from app.core.config import settings
+
+
+def setup_logging() -> None:
+    log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.JSONRenderer() if settings.ENVIRONMENT != "development"
+            else structlog.dev.ConsoleRenderer(),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(log_level),
+        context_class=dict,
+        logger_factory=structlog.PrintLoggerFactory(),
+    )
+
+
+logger = structlog.get_logger("finpal")
