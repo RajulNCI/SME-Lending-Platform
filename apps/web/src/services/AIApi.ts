@@ -1,6 +1,6 @@
 /**
  * Nathan's AI Agent API — https://finpals-prototype.vercel.app
- * 
+ *
  * Endpoints:
  *   POST /api/v1/uploads              — upload documents + form data
  *   POST /api/v1/decisions/analyze    — trigger AI credit analysis
@@ -11,7 +11,18 @@
  *   GET  /api/v1/health               — health check
  */
 
-const NATHAN_BASE_URL = 'https://finpals-prototype.vercel.app';
+/**
+ * Nathan's API — with dev proxy fallback for CORS
+ *
+ * In production (Vercel): hits Nathan's URL directly once he whitelists us
+ * In local dev: routes through Vite proxy to avoid CORS
+ */
+
+const IS_DEV = import.meta.env.DEV;
+
+// In dev: use /nathan-api (proxied by Vite → finpals-prototype.vercel.app)
+// In prod: use Nathan's real URL directly (once he whitelists our Vercel domain)
+const NATHAN_BASE_URL = IS_DEV ? '/ai-api' : 'https://finpals-prototype.vercel.app';
 
 // ── Types matching Nathan's API ───────────────────────────────────────────────
 
@@ -69,10 +80,7 @@ export interface AuditEntry {
 
 // ── API client ────────────────────────────────────────────────────────────────
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${NATHAN_BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -120,9 +128,7 @@ export async function uploadApplication(
 }
 
 /** Step 2 — trigger AI credit analysis */
-export async function analyzeApplication(
-  payload: AnalyzePayload
-): Promise<AIDecisionResult> {
+export async function analyzeApplication(payload: AnalyzePayload): Promise<AIDecisionResult> {
   return request('/api/v1/decisions/analyze', {
     method: 'POST',
     body: JSON.stringify(payload),
