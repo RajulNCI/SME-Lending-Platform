@@ -1012,7 +1012,7 @@ const LoanApplicationPage: React.FC = () => {
 
             <CardDivider />
             <SectionLabel>Consent & declarations (GDPR Art.22)</SectionLabel>
-            {[
+            {/* {[
               {
                 name: 'consentData' as const,
                 label:
@@ -1062,7 +1062,94 @@ const LoanApplicationPage: React.FC = () => {
                   <ErrorMsg style={{ marginLeft: '1.75rem' }}>{errors[c.name]}</ErrorMsg>
                 )}
               </div>
-            ))}
+            ))} */}
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem', margin: '1rem 0' }}
+            >
+              {[
+                {
+                  name: 'consentData' as const,
+                  label:
+                    'I consent to Finpals processing my personal and business data for credit assessment under GDPR Article 6(1)(b).',
+                },
+                {
+                  name: 'consentCCR' as const,
+                  label:
+                    'I authorise Finpals to submit an enquiry to the Central Credit Register (CCR) operated by the Central Bank of Ireland.',
+                },
+                {
+                  name: 'consentAI' as const,
+                  label:
+                    'I understand an AI system will assist in the credit decision (GDPR Art.22) and I have the right to request human review and appeal.',
+                },
+              ].map((c) => (
+                <div key={c.name}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      padding: '12px 14px',
+                      background: form[c.name] ? '#F0FDF9' : '#FAFBFC',
+                      border: `1.5px solid ${form[c.name] ? '#1D9E75' : '#E2E8F0'}`,
+                      borderRadius: '8px',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {/* Custom visible checkbox */}
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '5px',
+                        flexShrink: 0,
+                        marginTop: '1px',
+                        border: `2px solid ${form[c.name] ? '#1D9E75' : '#CBD5E0'}`,
+                        background: form[c.name] ? '#1D9E75' : '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {form[c.name] && (
+                        <svg
+                          width="11"
+                          height="9"
+                          viewBox="0 0 11 9"
+                          fill="none"
+                        >
+                          <path
+                            d="M1 4L4 7.5L10 1"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    {/* Hidden real checkbox — still triggers onChange */}
+                    <input
+                      type="checkbox"
+                      name={c.name}
+                      checked={form[c.name] as boolean}
+                      onChange={set}
+                      style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span style={{ fontSize: '0.875rem', color: '#2D3748', lineHeight: '1.5' }}>
+                      {c.label}
+                    </span>
+                  </label>
+                  {errors[c.name] && (
+                    <p style={{ fontSize: '0.75rem', color: '#E24B4A', margin: '4px 0 0 14px' }}>
+                      {errors[c.name]}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
 
             <div
               style={{
