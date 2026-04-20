@@ -1,42 +1,32 @@
 /**
- * Nathan's AI Agent API — https://finpals-prototype.vercel.app
+ * nathanApi.ts — updated to match Nathan's confirmed field names exactly
  *
- * Endpoints:
- *   POST /api/v1/uploads              — upload documents + form data
- *   POST /api/v1/decisions/analyze    — trigger AI credit analysis
- *   POST /api/v1/decisions            — submit HITL decision
- *   GET  /api/v1/decisions            — list all decisions
- *   GET  /api/v1/reports/{applicationId} — get full report
- *   GET  /api/v1/audit                — audit trail
- *   GET  /api/v1/health               — health check
- */
-
-/**
- * Nathan's API — with dev proxy fallback for CORS
- *
- * In production (Vercel): hits Nathan's URL directly once he whitelists us
- * In local dev: routes through Vite proxy to avoid CORS
+ * Upload response shape (confirmed by Nathan):
+ * {
+ *   applicationId, borrower, sector, revenue, ebitda, dscr,
+ *   requestedAmount, accountingPeriod, documentType, id, createdAt
+ * }
  */
 
 const IS_DEV = import.meta.env.DEV;
 
-// In dev: use /nathan-api (proxied by Vite → finpals-prototype.vercel.app)
-// In prod: use Nathan's real URL directly (once he whitelists our Vercel domain)
-const NATHAN_BASE_URL = IS_DEV ? '/ai-api' : 'https://finpals-prototype.vercel.app';
+const NATHAN_BASE = IS_DEV
+  ? '/ai-api' // Vite proxy — change 'ai-api' to whatever you named it in vite.config.ts
+  : 'https://finpals-prototype.vercel.app';
 
-// ── Types matching Nathan's API ───────────────────────────────────────────────
-
-export interface UploadPayload {
+// ── Confirmed response shape from Nathan ────────────────────────────────────
+export interface UploadResponse {
   applicationId: string;
   borrower: string;
-  requestedAmount: number;
   sector: string;
-  documentType: string;
-  accountingPeriod: string;
   revenue: number;
   ebitda: number;
   dscr: number;
-  notes?: string;
+  requestedAmount: number;
+  accountingPeriod: string;
+  documentType: string;
+  id: string; // Nathan's internal upload ID e.g. "UP-..."
+  createdAt: string; // ISO timestamp
 }
 
 export interface AnalyzePayload {
@@ -61,9 +51,16 @@ export interface AIDecisionResult {
   recommendation?: string;
   riskGrade?: string;
   pd?: number;
+  dscr?: number;
   score?: number;
   reasoning?: string;
-  shapCodes?: Array<{ factor: string; direction: string; weight: number; note?: string }>;
+  shapCodes?: Array<{
+    factor: string;
+    direction: 'positive' | 'negative';
+    weight: number;
+    note?: string;
+  }>;
+  modelVersion?: string;
   createdAt?: string;
   [key: string]: unknown;
 }
@@ -78,94 +75,81 @@ export interface AuditEntry {
   [key: string]: unknown;
 }
 
-// ── API client ────────────────────────────────────────────────────────────────
-
+// ── Base request helper ─────────────────────────────────────────────────────
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${NATHAN_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
+  const res = await fetch(`${NATHAN_BASE}${path}`, options);
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Nathan API ${path} failed (${res.status}): ${text}`);
+    throw new Error(`[${res.status}] ${path}: ${text}`);
   }
-
   return res.json();
 }
 
-// ── Exported API calls ─────────────────────────────────────────────────────────
-
-/** Step 1 — upload form data + documents to Nathan's backend */
+// ── POST /api/v1/uploads ────────────────────────────────────────────────────
+// Send as multipart/form-data (Nathan confirmed this is supported)
+// Returns confirmed UploadResponse shape
 export async function uploadApplication(
-  payload: UploadPayload,
-  files: File[]
-): Promise<{ applicationId: string; status: string; [key: string]: unknown }> {
-  // Nathan's upload endpoint accepts multipart OR JSON depending on implementation
-  // Try JSON first; if he wants multipart, swap to FormData
+  applicationId: string,
+  file: File | null
+): Promise<UploadResponse> {
   const formData = new FormData();
-  formData.append('data', JSON.stringify(payload));
-  files.forEach((f) => formData.append('documents', f, f.name));
-
-  const res = await fetch(`${NATHAN_BASE_URL}/api/v1/uploads`, {
+  formData.append('applicationId', applicationId);
+  if (file) {
+    formData.append('file', file, file.name);
+  }
+  // No Content-Type header — browser sets multipart boundary automatically
+  const res = await fetch(`${NATHAN_BASE}/api/v1/uploads`, {
     method: 'POST',
     body: formData,
-    // No Content-Type header — browser sets multipart boundary automatically
   });
-
   if (!res.ok) {
-    // Fallback: try JSON only (if Nathan's endpoint doesn't support multipart yet)
-    return request('/api/v1/uploads', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    const text = await res.text();
+    throw new Error(`[${res.status}] /api/v1/uploads: ${text}`);
   }
-
   return res.json();
 }
 
-/** Step 2 — trigger AI credit analysis */
+// ── POST /api/v1/decisions/analyze ─────────────────────────────────────────
 export async function analyzeApplication(payload: AnalyzePayload): Promise<AIDecisionResult> {
   return request('/api/v1/decisions/analyze', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 }
 
-/** Submit HITL decision (Credit Officer approve/decline/refer) */
+// ── POST /api/v1/decisions ─────────────────────────────────────────────────
 export async function submitDecision(
   payload: DecisionPayload
 ): Promise<{ id: string; status: string; [key: string]: unknown }> {
   return request('/api/v1/decisions', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 }
 
-/** Get all decisions */
+// ── GET /api/v1/decisions ──────────────────────────────────────────────────
 export async function getDecisions(): Promise<AIDecisionResult[]> {
   return request('/api/v1/decisions');
 }
 
-/** Get full AI report for an application */
+// ── GET /api/v1/reports/{applicationId} ────────────────────────────────────
 export async function getReport(applicationId: string): Promise<AIDecisionResult> {
   return request(`/api/v1/reports/${applicationId}`);
 }
 
-/** Get audit trail */
+// ── GET /api/v1/audit ─────────────────────────────────────────────────────
 export async function getAuditTrail(): Promise<AuditEntry[]> {
   return request('/api/v1/audit');
 }
 
-/** Health check */
+// ── GET /api/v1/health ────────────────────────────────────────────────────
 export async function checkHealth(): Promise<{ status: string }> {
   return request('/api/v1/health');
 }
 
-/** Generate application ID in Nathan's expected format */
+// ── Utility ───────────────────────────────────────────────────────────────
 export function generateApplicationId(): string {
   const year = new Date().getFullYear();
   const num = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
