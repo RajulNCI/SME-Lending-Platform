@@ -4,7 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import theme from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ROLE_HOME } from './types/auth';
+import { ROLE_HOME, UserRole } from './types/auth';
 
 import LoginPage from './pages/auth/LoginPage';
 import IntakePage from './pages/intake/IntakePage';
@@ -16,10 +16,9 @@ import CollectionsPage from './pages/collections/CollectionsPage';
 import MrmPage from './pages/mrm/MrmPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import BorrowerPage from './pages/borrower/BorrowerPage';
-
-// Placeholder for pages not yet built
+import BorrowerApplyPage from './pages/borrower/BorrowerApplyPage';
 import PageLayout from './components/layout/PageLayout';
-import LoanApplicationPage from './pages/loan/LoanApplicationPage';
+
 const Soon: React.FC<{ title: string }> = ({ title }) => (
   <PageLayout title={title}>
     <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
@@ -27,14 +26,11 @@ const Soon: React.FC<{ title: string }> = ({ title }) => (
       <h2 style={{ color: '#0C2B5E', fontFamily: "'Inter',sans-serif", margin: '0 0 .5rem' }}>
         {title}
       </h2>
-      <p style={{ color: '#718096', fontSize: '.9375rem' }}>
-        This screen is being built. Check back soon.
-      </p>
+      <p style={{ color: '#718096', fontSize: '.9375rem' }}>This screen is being built.</p>
     </div>
   </PageLayout>
 );
 
-// Protected route wrapper
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   if (!user)
@@ -47,7 +43,28 @@ const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
-// Default redirect after login based on role
+const RoleGuard: React.FC<{ children: React.ReactNode; roles: UserRole[] }> = ({
+  children,
+  roles,
+}) => {
+  const { user } = useAuth();
+  if (!user)
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  if (!roles.includes(user.role))
+    return (
+      <Navigate
+        to={ROLE_HOME[user.role]}
+        replace
+      />
+    );
+  return <>{children}</>;
+};
+
 const DefaultRedirect: React.FC = () => {
   const { user } = useAuth();
   if (!user)
@@ -71,229 +88,238 @@ const App: React.FC = () => (
       <GlobalStyles />
       <BrowserRouter>
         <Routes>
-          {/* Public */}
           <Route
             path="/login"
             element={<LoginPage />}
           />
 
-          {/* Protected — all roles */}
+          {/* Credit Officer — sees queue after AI processes borrower's docs */}
           <Route
             path="/intake"
             element={
-              <Protected>
+              <RoleGuard roles={['credit_officer', 'ops_manager', 'it_admin']}>
                 <IntakePage />
-              </Protected>
+              </RoleGuard>
             }
           />
           <Route
             path="/queue"
             element={
-              <Protected>
+              <RoleGuard
+                roles={['credit_officer', 'ops_manager', 'it_admin', 'compliance_officer']}
+              >
                 <QueuePage />
-              </Protected>
+              </RoleGuard>
             }
           />
+
+          {/* Compliance */}
           <Route
             path="/audit"
             element={
-              <Protected>
+              <RoleGuard roles={['compliance_officer', 'it_admin', 'credit_officer']}>
                 <AuditPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <Protected>
-                <DashboardPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/risk"
-            element={
-              <Protected>
-                <RiskPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/risk/models"
-            element={
-              <Protected>
-                <RiskPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/risk/stress"
-            element={
-              <Protected>
-                <RiskPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/risk/ewi"
-            element={
-              <Protected>
-                <Soon title="Early Warning Indicators" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/collections"
-            element={
-              <Protected>
-                <CollectionsPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/bureau"
-            element={
-              <Protected>
-                <Soon title="Credit Bureau Reporting" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/mrm"
-            element={
-              <Protected>
-                <MrmPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/mrm/metrics"
-            element={
-              <Protected>
-                <MrmPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/mrm/drift"
-            element={
-              <Protected>
-                <MrmPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/mrm/challenger"
-            element={
-              <Protected>
-                <Soon title="Champion-Challenger" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <Protected>
-                <AdminUsersPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/admin/dora"
-            element={
-              <Protected>
-                <Soon title="DORA Resilience" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/admin/api"
-            element={
-              <Protected>
-                <Soon title="API Management" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/admin/tprm"
-            element={
-              <Protected>
-                <Soon title="TPRM Register" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/borrower"
-            element={
-              <Protected>
-                <BorrowerPage />
-              </Protected>
-            }
-          />
-          <Route
-            path="/borrower/apply"
-            element={
-              <Protected>
-                <Soon title="New Application" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/borrower/messages"
-            element={
-              <Protected>
-                <Soon title="Messages" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/payments"
-            element={
-              <Protected>
-                <Soon title="SEPA Payments" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/mandates"
-            element={
-              <Protected>
-                <Soon title="SDD Mandates" />
-              </Protected>
-            }
-          />
-          <Route
-            path="/sla"
-            element={
-              <Protected>
-                <Soon title="SLA Monitor" />
-              </Protected>
+              </RoleGuard>
             }
           />
           <Route
             path="/ccr"
             element={
-              <Protected>
+              <RoleGuard roles={['compliance_officer', 'it_admin']}>
                 <Soon title="CCR / AnaCredit" />
-              </Protected>
+              </RoleGuard>
             }
           />
           <Route
             path="/gdpr"
             element={
-              <Protected>
+              <RoleGuard roles={['compliance_officer', 'it_admin']}>
                 <Soon title="GDPR Requests" />
-              </Protected>
+              </RoleGuard>
+            }
+          />
+
+          {/* Ops */}
+          <Route
+            path="/dashboard"
+            element={
+              <RoleGuard roles={['ops_manager', 'it_admin']}>
+                <DashboardPage />
+              </RoleGuard>
             }
           />
           <Route
-            path="/applications/new"
+            path="/payments"
             element={
-              <Protected>
-                <LoanApplicationPage />
-              </Protected>
+              <RoleGuard roles={['ops_manager', 'it_admin']}>
+                <Soon title="SEPA Payments" />
+              </RoleGuard>
             }
           />
+          <Route
+            path="/mandates"
+            element={
+              <RoleGuard roles={['ops_manager', 'collections_officer', 'it_admin']}>
+                <Soon title="SDD Mandates" />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/sla"
+            element={
+              <RoleGuard roles={['ops_manager', 'it_admin']}>
+                <Soon title="SLA Monitor" />
+              </RoleGuard>
+            }
+          />
+
+          {/* Risk */}
+          <Route
+            path="/risk"
+            element={
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
+                <RiskPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/risk/models"
+            element={
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
+                <RiskPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/risk/stress"
+            element={
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
+                <RiskPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/risk/ewi"
+            element={
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
+                <Soon title="Early Warning Indicators" />
+              </RoleGuard>
+            }
+          />
+
+          {/* MRM */}
+          <Route
+            path="/mrm"
+            element={
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
+                <MrmPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/mrm/metrics"
+            element={
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
+                <MrmPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/mrm/drift"
+            element={
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
+                <MrmPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/mrm/challenger"
+            element={
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
+                <Soon title="Champion-Challenger" />
+              </RoleGuard>
+            }
+          />
+
+          {/* Collections */}
+          <Route
+            path="/collections"
+            element={
+              <RoleGuard roles={['collections_officer', 'ops_manager', 'it_admin']}>
+                <CollectionsPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/bureau"
+            element={
+              <RoleGuard roles={['collections_officer', 'ops_manager', 'it_admin']}>
+                <Soon title="Credit Bureau Reporting" />
+              </RoleGuard>
+            }
+          />
+
+          {/* IT Admin */}
+          <Route
+            path="/admin/users"
+            element={
+              <RoleGuard roles={['it_admin']}>
+                <AdminUsersPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/admin/dora"
+            element={
+              <RoleGuard roles={['it_admin']}>
+                <Soon title="DORA Resilience" />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/admin/api"
+            element={
+              <RoleGuard roles={['it_admin']}>
+                <Soon title="API Management" />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/admin/tprm"
+            element={
+              <RoleGuard roles={['it_admin']}>
+                <Soon title="TPRM Register" />
+              </RoleGuard>
+            }
+          />
+
+          {/* Borrower — uploads docs, submits application, waits for decision */}
+          <Route
+            path="/borrower"
+            element={
+              <RoleGuard roles={['borrower_sme']}>
+                <BorrowerPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/borrower/apply"
+            element={
+              <RoleGuard roles={['borrower_sme']}>
+                <BorrowerApplyPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/borrower/messages"
+            element={
+              <RoleGuard roles={['borrower_sme']}>
+                <Soon title="Messages" />
+              </RoleGuard>
+            }
+          />
+
+          {/* Shared */}
           <Route
             path="/settings"
             element={
@@ -302,8 +328,6 @@ const App: React.FC = () => (
               </Protected>
             }
           />
-
-          {/* Default redirects */}
           <Route
             path="/"
             element={<DefaultRedirect />}
