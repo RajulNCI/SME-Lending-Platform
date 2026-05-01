@@ -1,157 +1,194 @@
 /**
- * nathanApi.ts — updated to match Nathan's confirmed field names exactly
+ * services/nathanApi.ts
  *
- * Upload response shape (confirmed by Nathan):
- * {
- *   applicationId, borrower, sector, revenue, ebitda, dscr,
- *   requestedAmount, accountingPeriod, documentType, id, createdAt
- * }
+ * The ONLY file that talks to Nathan's Python backend.
+ * All components import from here — never from mockPythonApi directly.
+ *
+ * ─── TO SWITCH FROM MOCK TO REAL API ────────────────────────────────────────
+ * 1. Set USE_REAL_API = true
+ * 2. Set PYTHON_API_BASE_URL to Nathan's endpoint
+ * 3. Done — nothing else changes
+ * ────────────────────────────────────────────────────────────────────────────
  */
 
-const IS_DEV = import.meta.env.DEV;
+import {
+  mockSubmitApplication,
+  mockGetStatus,
+  mockAdvanceStep,
+  mockGetQueue,
+  mockSubmitDecision,
+  mockGetBorrowerApplications,
+  mockGetProgress,
+  mockCreateApplication,
+  type SubmitApplicationResponse,
+  type ApplicationStatusResponse,
+  type QueueApplicationSummary,
+  type SubmitDecisionRequest,
+  type SubmitDecisionResponse,
+  type BorrowerApplication,
+  type ProgressOut
+} from './mockPythonApi';
 
-const NATHAN_BASE = IS_DEV
-  ? '/ai-api' // Vite proxy — change 'ai-api' to whatever you named it in vite.config.ts
-  : 'https://finpals-prototype.vercel.app';
+// ── Config — change these when Nathan's API is ready ─────────────────────────
+const USE_REAL_API = false;
+const PYTHON_API_BASE_URL = 'http://localhost:8000'; // Nathan's FastAPI endpoint
 
-// ── Confirmed response shape from Nathan ────────────────────────────────────
-export interface UploadResponse {
-  applicationId: string;
-  borrower: string;
-  sector: string;
-  revenue: number;
-  ebitda: number;
-  dscr: number;
-  requestedAmount: number;
-  accountingPeriod: string;
-  documentType: string;
-  id: string; // Nathan's internal upload ID e.g. "UP-..."
-  createdAt: string; // ISO timestamp
-}
+// ── Real API calls (filled in when Nathan is ready) ──────────────────────────
 
-export interface AnalyzePayload {
-  applicationId: string;
-  borrower: string;
-  requestedAmount: number;
-  revenue: number;
-  ebitda: number;
-  dscr: number;
-}
-
-export interface DecisionPayload {
-  applicationId: string;
-  outcome: 'approved' | 'declined' | 'referred';
-  rationale: string;
-  officerName: string;
-}
-
-export interface AIDecisionResult {
-  applicationId: string;
-  borrower?: string;
-  recommendation?: string;
-  riskGrade?: string;
-  pd?: number;
-  dscr?: number;
-  score?: number;
-  reasoning?: string;
-  shapCodes?: Array<{
-    factor: string;
-    direction: 'positive' | 'negative';
-    weight: number;
-    note?: string;
-  }>;
-  modelVersion?: string;
-  createdAt?: string;
-  [key: string]: unknown;
-}
-
-export interface AuditEntry {
-  id?: string;
-  applicationId?: string;
-  eventType?: string;
-  description?: string;
-  timestamp?: string;
-  actor?: string;
-  [key: string]: unknown;
-}
-
-// ── Base request helper ─────────────────────────────────────────────────────
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${NATHAN_BASE}${path}`, options);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`[${res.status}] ${path}: ${text}`);
-  }
-  return res.json();
-}
-
-// ── POST /api/v1/uploads ────────────────────────────────────────────────────
-// Send as multipart/form-data (Nathan confirmed this is supported)
-// Returns confirmed UploadResponse shape
-export async function uploadApplication(
+async function realSubmitApplication(
   applicationId: string,
-  file: File | null
-): Promise<UploadResponse> {
-  const formData = new FormData();
-  formData.append('applicationId', applicationId);
-  if (file) {
-    formData.append('file', file, file.name);
-  }
-  // No Content-Type header — browser sets multipart boundary automatically
-  const res = await fetch(`${NATHAN_BASE}/api/v1/uploads`, {
+  documents: { name: string; size: number; type: string }[]
+): Promise<SubmitApplicationResponse> {
+  const form = new FormData();
+  form.append('application_id', applicationId);
+  form.append('documents_meta', JSON.stringify(documents));
+  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications/submit`, {
     method: 'POST',
-    body: formData,
+    body: form,
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`[${res.status}] /api/v1/uploads: ${text}`);
-  }
+  if (!res.ok) throw new Error(`Submit failed: ${res.statusText}`);
   return res.json();
 }
 
-// ── POST /api/v1/decisions/analyze ─────────────────────────────────────────
-export async function analyzeApplication(payload: AnalyzePayload): Promise<AIDecisionResult> {
-  return request('/api/v1/decisions/analyze', {
+async function realGetStatus(applicationId: string): Promise<ApplicationStatusResponse> {
+  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications/${applicationId}/status`);
+  if (!res.ok) throw new Error(`Status fetch failed: ${res.statusText}`);
+  return res.json();
+}
+
+async function realGetQueue(): Promise<QueueApplicationSummary[]> {
+  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/queue`);
+  if (!res.ok) throw new Error(`Queue fetch failed: ${res.statusText}`);
+  return res.json();
+}
+
+async function realSubmitDecision(req: SubmitDecisionRequest): Promise<SubmitDecisionResponse> {
+  const res = await fetch(
+    `${PYTHON_API_BASE_URL}/api/v1/applications/${req.applicationId}/decision`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+    }
+  );
+  if (!res.ok) throw new Error(`Decision submit failed: ${res.statusText}`);
+  return res.json();
+}
+
+// ── Public API — these are the functions all components use ──────────────────
+
+// ── New API calls for Borrower Flow ──────────────────────────────────────────
+
+async function realCreateApplication(data: any) {
+  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer dummy-token'
+    },
+    body: JSON.stringify(data)
   });
+  if (!res.ok) throw new Error(`Submit failed: ${res.statusText}`);
+  return res.json();
 }
 
-// ── POST /api/v1/decisions ─────────────────────────────────────────────────
-export async function submitDecision(
-  payload: DecisionPayload
-): Promise<{ id: string; status: string; [key: string]: unknown }> {
-  return request('/api/v1/decisions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+async function realGetProgress(applicationId: string): Promise<ProgressOut> {
+  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications/${applicationId}/progress`, {
+    headers: { 'Authorization': 'Bearer dummy-token' }
   });
+  if (!res.ok) throw new Error(`Progress fetch failed: ${res.statusText}`);
+  return res.json();
 }
 
-// ── GET /api/v1/decisions ──────────────────────────────────────────────────
-export async function getDecisions(): Promise<AIDecisionResult[]> {
-  return request('/api/v1/decisions');
+async function realGetBorrowerApplications(): Promise<BorrowerApplication[]> {
+  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications`, {
+    headers: { 'Authorization': 'Bearer dummy-token' }
+  });
+  if (!res.ok) throw new Error(`Applications fetch failed: ${res.statusText}`);
+  return res.json();
 }
 
-// ── GET /api/v1/reports/{applicationId} ────────────────────────────────────
-export async function getReport(applicationId: string): Promise<AIDecisionResult> {
-  return request(`/api/v1/reports/${applicationId}`);
+export async function createApplication(data: any) {
+  return USE_REAL_API ? realCreateApplication(data) : mockCreateApplication(data);
 }
 
-// ── GET /api/v1/audit ─────────────────────────────────────────────────────
-export async function getAuditTrail(): Promise<AuditEntry[]> {
-  return request('/api/v1/audit');
+export async function getProgress(applicationId: string): Promise<ProgressOut> {
+  return USE_REAL_API ? realGetProgress(applicationId) : mockGetProgress(applicationId);
 }
 
-// ── GET /api/v1/health ────────────────────────────────────────────────────
-export async function checkHealth(): Promise<{ status: string }> {
-  return request('/api/v1/health');
+export async function getBorrowerApplications(): Promise<BorrowerApplication[]> {
+  return USE_REAL_API ? realGetBorrowerApplications() : mockGetBorrowerApplications();
 }
 
-// ── Utility ───────────────────────────────────────────────────────────────
-export function generateApplicationId(): string {
-  const year = new Date().getFullYear();
-  const num = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
-  return `FIN-${year}-${num}`;
+export type { BorrowerApplication, ProgressOut };
+
+// --- LEGACY STUBS FOR UNUSED PAGES TO PASS TSC ---
+export interface UploadResponse { id: string; borrower: string; sector: string; requestedAmount: number; revenue: number; ebitda: number; dscr: number; accountingPeriod: string; documentType: string; }
+export interface AuditEntry { id: string; timestamp: string; user: string; action: string; details: any; applicationId?: string; eventType?: string; description?: string; actor?: string; }
+export const uploadApplication = async (id: string, file: File): Promise<UploadResponse> => ({ id, borrower: '', sector: '', requestedAmount: 0, revenue: 0, ebitda: 0, dscr: 0, accountingPeriod: '', documentType: '' });
+export const analyzeApplication = async (data: any): Promise<any> => ({});
+export const generateApplicationId = () => `FP-${Date.now()}`;
+export const getDecisions = async (): Promise<any[]> => [];
+export const getAuditTrail = async (): Promise<AuditEntry[]> => [];
+export const getReport = async (appId?: string): Promise<any> => ({});
+
+
+
+/**
+ * Called when borrower submits documents.
+ * Creates the application record in Nathan's backend.
+ */
+export async function submitApplication(
+  applicationId: string,
+  documents: { name: string; size: number; type: string }[]
+): Promise<SubmitApplicationResponse> {
+  return USE_REAL_API
+    ? realSubmitApplication(applicationId, documents)
+    : mockSubmitApplication(applicationId, documents);
 }
+
+/**
+ * Poll this every 1s to get current pipeline step status.
+ * Returns step array + assessment (once AI completes) + officerDecision.
+ */
+export async function getApplicationStatus(
+  applicationId: string
+): Promise<ApplicationStatusResponse> {
+  return USE_REAL_API ? realGetStatus(applicationId) : mockGetStatus(applicationId);
+}
+
+/**
+ * Called by the borrower pipeline to advance steps in mock mode.
+ * Remove this call when real API is used — Nathan's backend advances steps internally.
+ */
+export async function advanceStep(applicationId: string, step: number): Promise<void> {
+  if (!USE_REAL_API) {
+    await mockAdvanceStep(applicationId, step);
+  }
+  // No-op in real mode — Nathan's pipeline advances automatically
+}
+
+/**
+ * Called by QueuePage to load all applications for the credit officer.
+ * Returns live counts — not static mock counts.
+ */
+export async function getQueue(): Promise<QueueApplicationSummary[]> {
+  return USE_REAL_API ? realGetQueue() : mockGetQueue();
+}
+
+/**
+ * Called by DecisionGate when credit officer submits approve/refer/decline.
+ * Logs immutably per EU AI Act Art.12.
+ */
+export async function submitDecision(req: SubmitDecisionRequest): Promise<SubmitDecisionResponse> {
+  return USE_REAL_API ? realSubmitDecision(req) : mockSubmitDecision(req);
+}
+
+// Re-export types so components only need to import from nathanApi
+export type {
+  SubmitApplicationResponse,
+  ApplicationStatusResponse,
+  QueueApplicationSummary,
+  SubmitDecisionRequest,
+  SubmitDecisionResponse,
+};

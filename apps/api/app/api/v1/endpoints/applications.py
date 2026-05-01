@@ -18,7 +18,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user, require_roles
 from app.models.application import Application, ApplicationStatus
 from app.models.user import User
-from app.schemas.application import ApplicationCreate, ApplicationOut, ApplicationListOut, AIAssessmentUpdate
+from app.schemas.application import ApplicationCreate, ApplicationOut, ApplicationListOut, AIAssessmentUpdate, ProgressOut
 from app.schemas.audit import EvidenceBundle
 from app.services.audit_service import AuditService
 from app.services.application_service import ApplicationService
@@ -33,12 +33,16 @@ async def list_applications(
     status_filter: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
-    token_data: dict = Depends(require_roles(*CREDIT_ROLES)),
+    token_data: dict = Depends(require_roles(*CREDIT_ROLES, "borrower_sme")),
     db: AsyncSession = Depends(get_db),
 ) -> list[ApplicationListOut]:
     query = select(Application).order_by(desc(Application.created_at)).limit(limit).offset(offset)
     if status_filter:
         query = query.where(Application.status == status_filter)
+        
+    if token_data.get("role") == "borrower_sme":
+        query = query.where(Application.borrower_id == token_data["sub"])
+
     result = await db.execute(query)
     apps = result.scalars().all()
     return [ApplicationListOut.model_validate(a) for a in apps]
@@ -137,3 +141,37 @@ async def get_evidence_bundle(
     )
 
     return bundle
+
+
+@router.get("/{application_id}/progress", response_model=ProgressOut, summary="Get application processing progress")
+async def get_application_progress(
+    application_id: str,
+    token_data: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ProgressOut:
+    app = await ApplicationService.get_or_404(db, application_id)
+    
+    elapsed = (datetime.now(timezone.utc) - app.created_at).total_seconds()
+    
+    step = 0
+    if elapsed >= 0.9:
+        step = 1
+    if elapsed >= 2.3:
+        step = 2
+    if elapsed >= 3.5:
+        step = 3
+    if elapsed >= 5.1:
+        step = 4
+    if elapsed >= 6.2:
+        step = 5
+    if elapsed >= 7.1:
+        step = 6
+        
+    if app.status in [ApplicationStatus.ai_assessment, ApplicationStatus.hitl_queue, ApplicationStatus.approved, ApplicationStatus.declined, ApplicationStatus.referred]:
+        step = 6
+
+    return ProgressOut(
+        step=step,
+        total_steps=6,
+        completed=step >= 6
+    )

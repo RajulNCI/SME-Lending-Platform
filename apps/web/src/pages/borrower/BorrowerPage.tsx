@@ -1,13 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import PageLayout from '../../components/layout/PageLayout';
 import { Card, CardTitle, CardDivider } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { getBorrowerApplications, type BorrowerApplication } from '../../services/AIApi';
+
+
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  th { text-align: left; padding: 0.75rem; border-bottom: 1px solid #E2E8F0; color: #4A5568; font-size: 0.875rem; }
+  td { padding: 0.75rem; border-bottom: 1px solid #E2E8F0; color: #2D3748; font-size: 0.875rem; }
+`;
+
 
 const BorrowerPage: React.FC = () => {
   const navigate = useNavigate();
+  const [apps, setApps] = useState<BorrowerApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchApps() {
+      try {
+        const data = await getBorrowerApplications();
+        setApps(data);
+      } catch (err) {
+        console.error("Failed to fetch applications", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchApps();
+  }, []);
+
   return (
     <PageLayout title="My Applications">
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>
@@ -33,25 +61,57 @@ const BorrowerPage: React.FC = () => {
         </div>
 
         <Card $padding="md">
+          
           <CardTitle>Application status</CardTitle>
           <CardDivider />
-          <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
-            <p style={{ fontSize: '2rem', margin: '0 0 .75rem' }}>📋</p>
-            <p style={{ fontWeight: 600, color: '#0C2B5E', margin: '0 0 .5rem' }}>
-              No applications yet
-            </p>
-            <p style={{ fontSize: '.875rem', color: '#718096', margin: '0 0 1.25rem' }}>
-              Submit your first application to get started.
-              <br />
-              Our AI engine will analyse your documents within minutes.
-            </p>
-            <Button
-              $variant="primary"
-              onClick={() => navigate('/borrower/apply')}
-            >
-              Start application →
-            </Button>
-          </div>
+          
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>Loading applications...</div>
+          ) : apps.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
+              <p style={{ fontSize: '2rem', margin: '0 0 .75rem' }}>📋</p>
+              <p style={{ fontWeight: 600, color: '#0C2B5E', margin: '0 0 .5rem' }}>
+                No applications yet
+              </p>
+              <p style={{ fontSize: '.875rem', color: '#718096', margin: '0 0 1.25rem' }}>
+                Submit your first application to get started.
+                <br />
+                Our AI engine will analyse your documents within minutes.
+              </p>
+              <Button
+                $variant="primary"
+                onClick={() => navigate('/borrower/apply')}
+              >
+                Start application →
+              </Button>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+                <Table>
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Amount</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {apps.map(a => (
+                            <tr key={a.id}>
+                                <td style={{ fontFamily: 'monospace' }}>{a.reference}</td>
+                                <td>€{a.loan_amount.toLocaleString()}</td>
+                                <td>{a.loan_purpose}</td>
+                                <td><Badge $variant={a.status === 'approved' ? 'success' : a.status === 'declined' ? 'error' : 'warning'}>{a.status}</Badge></td>
+                                <td>{new Date(a.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </div>
+          )}
+
         </Card>
 
         <Card

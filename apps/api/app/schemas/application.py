@@ -100,3 +100,9 @@ class ApplicationListOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ProgressOut(BaseModel):
+    step: int
+    total_steps: int
+    completed: bool
