@@ -13,6 +13,7 @@ const QueuePage: React.FC = () => {
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<Record<string, string>>({});
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const initials =
     user?.displayName
@@ -112,8 +113,14 @@ const QueuePage: React.FC = () => {
 
   return (
     <div className={styles.app}>
+      {/* SIDEBAR OVERLAY FOR MOBILE */}
+      <div 
+        className={`${styles.sidebarOverlay} ${sidebarOpen ? styles.sidebarOverlayOpen : ''}`} 
+        onClick={() => setSidebarOpen(false)}
+      />
+
       {/* SIDEBAR */}
-      <nav className={styles.sidebar}>
+      <nav className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sbLogo}>
           <div className={styles.sbMark}>F</div>
           <div>
@@ -152,6 +159,7 @@ const QueuePage: React.FC = () => {
       <div className={styles.main}>
         {/* TOPBAR */}
         <div className={styles.topbar}>
+          <button className={styles.hamburger} onClick={() => setSidebarOpen(true)}>☰</button>
           <div className={styles.tbTitle}>Loan Intake & Assessment</div>
           <div className={styles.tbRight}>
             <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => showToast('+ New Application modal')}>+ New Application</button>
@@ -199,17 +207,18 @@ const QueuePage: React.FC = () => {
                 ))}
               </div>
               
-              <div className={styles.qTable}>
-                <div className={styles.qThead}>
-                  <div className={styles.qTh}>Priority</div>
-                  <div className={styles.qTh}>Company / Sector</div>
-                  <div className={styles.qTh}>Amount</div>
-                  <div className={styles.qTh}>Grade</div>
-                  <div className={styles.qTh}>PD</div>
-                  <div className={styles.qTh}>Status</div>
-                  <div className={styles.qTh}>DSCR</div>
-                  <div className={styles.qTh}></div>
-                </div>
+              <div className={styles.qTableWrapper}>
+                <div className={styles.qTable}>
+                  <div className={styles.qThead}>
+                    <div className={styles.qTh}>Priority</div>
+                    <div className={styles.qTh}>Company / Sector</div>
+                    <div className={styles.qTh}>Amount</div>
+                    <div className={styles.qTh}>Grade</div>
+                    <div className={styles.qTh}>PD</div>
+                    <div className={styles.qTh}>Status</div>
+                    <div className={styles.qTh}>DSCR</div>
+                    <div className={styles.qTh}></div>
+                  </div>
                 
                 {filteredApps.map(app => {
                   const p = priority(app);
@@ -255,6 +264,7 @@ const QueuePage: React.FC = () => {
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           )}

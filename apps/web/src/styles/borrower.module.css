@@ -641,3 +641,49 @@
   font-size: 12px;
   font-family: var(--font-mono);
 }
+
+/* ── RESPONSIVE MEDIA QUERIES ── */
+@media (max-width: 768px) {
+  /* Hide the tag line on mobile */
+  .brandTag {
+    display: none;
+  }
+  
+  /* Form layout */
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Step indicator */
+  .stepRow {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    /* Force minimum width to prevent steps from squishing too much */
+    min-width: max-content;
+  }
+  
+  /* Document upload container */
+  .docGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .fileBox {
+    padding: 16px;
+  }
+  
+  .page {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Make top bar user chip smaller */
+  .userName, .userRole {
+    display: none;
+  }
+  .userChip {
+    padding: 4px;
+    border-radius: 50%;
+  }
+}
