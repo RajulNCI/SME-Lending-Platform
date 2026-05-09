@@ -4,6 +4,8 @@ import { useQueueData } from '../../hooks/useQueueData';
 import styles from '../../styles/queue.module.css';
 import ApplicationDetail from '../../features/queue/ApplicationDetail';
 import { MOCK_APPS_DATA } from '../../data/mockQueueDetails';
+import PageLayout from '../../components/layout/PageLayout';
+import { Button } from '../../components/ui/Button';
 
 const QueuePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -13,14 +15,6 @@ const QueuePage: React.FC = () => {
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<Record<string, string>>({});
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const initials =
-    user?.displayName
-      ?.split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .toUpperCase() || 'CO';
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -112,72 +106,17 @@ const QueuePage: React.FC = () => {
   const selectedApp = selectedAppId ? enrichedApps.find(a => a.id === selectedAppId) : null;
 
   return (
-    <div className={styles.app}>
-      {/* SIDEBAR OVERLAY FOR MOBILE */}
-      <div 
-        className={`${styles.sidebarOverlay} ${sidebarOpen ? styles.sidebarOverlayOpen : ''}`} 
-        onClick={() => setSidebarOpen(false)}
-      />
-
-      {/* SIDEBAR */}
-      <nav className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-        <div className={styles.sbLogo}>
-          <div className={styles.sbMark}>F</div>
-          <div>
-            <div className={styles.sbName}>FinPal</div>
-            <div className={styles.sbTag}>v5.0 · TRUSTWORTHY AI</div>
-          </div>
-        </div>
-        <div className={styles.sbSection}>
-          <div className={styles.sbLbl}>Platform</div>
-          <button className={styles.sbItem}><span className={styles.sbIcon}>↑</span> Intake Pipeline</button>
-          <button className={`${styles.sbItem} ${styles.sbItemActive}`} onClick={() => setSelectedAppId(null)}>
-            <span className={styles.sbIcon}>☰</span> Queue <span className={styles.sbBadge}>{pendingCount}</span>
-          </button>
-          <button className={styles.sbItem}><span className={styles.sbIcon}>◧</span> Audit Trail</button>
-        </div>
-        <div className={styles.sbSection}>
-          <div className={styles.sbLbl}>Risk & Compliance</div>
-          <button className={styles.sbItem}><span className={styles.sbIcon}>⚙</span> Model Governance</button>
-          <button className={styles.sbItem}><span className={styles.sbIcon}>▦</span> Portfolio Risk</button>
-        </div>
-        <div className={styles.sbUser}>
-          <div className={styles.avi}>{initials}</div>
-          <div style={{flex:1, minWidth:0}}>
-            <div style={{fontSize:13, fontWeight:500, color:'#fff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-              {user?.displayName || 'C. Officer'}
-            </div>
-            <div style={{fontSize:10, color:'rgba(255,255,255,.5)', fontFamily:'var(--font-mono)'}}>
-              Credit Officer · IAF PCF-11
-            </div>
-          </div>
-          <button onClick={logout} style={{background:'none', border:'none', color:'rgba(255,255,255,.5)', cursor:'pointer'}}>↪</button>
-        </div>
-      </nav>
-
-      {/* MAIN */}
-      <div className={styles.main}>
-        {/* TOPBAR */}
-        <div className={styles.topbar}>
-          <button className={styles.hamburger} onClick={() => setSidebarOpen(true)}>☰</button>
-          <div className={styles.tbTitle}>Loan Intake & Assessment</div>
-          <div className={styles.tbRight}>
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => showToast('+ New Application modal')}>+ New Application</button>
-            <button className={`${styles.btn} ${styles.btnOutline}`} style={{fontSize:12}}>✏ Tests</button>
-            <button className={`${styles.btn} ${styles.btnOutline}`} style={{fontSize:12}} onClick={logout}>→ Log Out</button>
-            <div className={styles.tbUser}>
-              <div style={{textAlign:'right'}}>
-                <div style={{fontSize:13, fontWeight:500, color:'var(--navy)'}}>{user?.displayName || 'C. Officer'}</div>
-                <div style={{fontSize:10, color:'var(--muted)', fontFamily:'var(--font-mono)'}}>Credit Officer · IAF PCF-11</div>
-              </div>
-              <div className={styles.aviLg}>{initials}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* CONTENT */}
-        <div className={styles.content}>
-          
+    <>
+      <PageLayout 
+        title="Loan Intake & Assessment"
+        notifCount={pendingCount}
+        actions={
+          <>
+            <Button $variant="primary" $size="sm" onClick={() => showToast('+ New Application modal')}>+ New Application</Button>
+            <Button $variant="ghost" $size="sm" style={{fontSize:12}}>✏ Tests</Button>
+          </>
+        }
+      >
           {/* QUEUE VIEW */}
           {!selectedAppId && (
             <div className={styles.queueView}>
@@ -280,8 +219,7 @@ const QueuePage: React.FC = () => {
             />
           )}
 
-        </div>
-      </div>
+      </PageLayout>
       
       {/* TOAST */}
       {toastMsg && (
@@ -289,7 +227,7 @@ const QueuePage: React.FC = () => {
           {toastMsg}
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -20,224 +20,37 @@ import {
   UploadResponse,
 } from '../../services/AIApi';
 
-// ── Animations ───────────────────────────────────────────────────────────────
-const spin = keyframes`to{transform:rotate(360deg)}`;
-const fadeUp = keyframes`from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}`;
-
-// ── Primitives ────────────────────────────────────────────────────────────────
-const PageWrap = styled.div`
-  max-width: 680px;
-  margin: 0 auto;
-`;
-const Grid2 = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  @media (min-width: 560px) {
-    grid-template-columns: 1fr 1fr;
-  }
-`;
-const Field = styled.div`
-  margin-bottom: 1rem;
-`;
-const Label = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #2d3748;
-  margin-bottom: 0.375rem;
-`;
-const Req = styled.span`
-  color: #e24b4a;
-  margin-left: 2px;
-`;
-const Input = styled.input<{ $error?: boolean; $prefilled?: boolean }>`
-  width: 100%;
-  height: 46px;
-  padding: 0 1rem;
-  -webkit-appearance: none;
-  border: 1.5px solid
-    ${({ $error, $prefilled }) => ($error ? '#E24B4A' : $prefilled ? '#1D9E75' : '#E2E8F0')};
-  border-radius: 8px;
-  font-size: 16px;
-  color: #2d3748;
-  background: ${({ $prefilled }) => ($prefilled ? '#F0FDF9' : '#fff')};
-  font-family: 'IBM Plex Sans', sans-serif;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-  &::placeholder {
-    color: #a0aec0;
-  }
-  &:focus {
-    outline: none;
-    border-color: #378add;
-    box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.18);
-  }
-`;
-const Select = styled.select<{ $error?: boolean }>`
-  width: 100%;
-  height: 46px;
-  padding: 0 2.5rem 0 1rem;
-  -webkit-appearance: none;
-  appearance: none;
-  border: 1.5px solid ${({ $error }) => ($error ? '#E24B4A' : '#E2E8F0')};
-  border-radius: 8px;
-  font-size: 16px;
-  color: #2d3748;
-  background: #fff;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  font-family: 'IBM Plex Sans', sans-serif;
-  &:focus {
-    outline: none;
-    border-color: #378add;
-    box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.18);
-  }
-`;
-const Textarea = styled.textarea`
-  width: 100%;
-  min-height: 80px;
-  padding: 0.75rem 1rem;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  color: #2d3748;
-  font-family: 'IBM Plex Sans', sans-serif;
-  resize: vertical;
-  &::placeholder {
-    color: #a0aec0;
-  }
-  &:focus {
-    outline: none;
-    border-color: #378add;
-    box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.18);
-  }
-`;
-const ErrMsg = styled.span`
-  display: block;
-  font-size: 0.75rem;
-  color: #e24b4a;
-  margin-top: 0.25rem;
-`;
-const Hint = styled.span`
-  display: block;
-  font-size: 0.75rem;
-  color: #718096;
-  margin-top: 0.25rem;
-`;
-const CurrWrap = styled.div`
-  position: relative;
-`;
-const CurrSym = styled.span`
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.9375rem;
-  color: #4a5568;
-  font-weight: 500;
-  pointer-events: none;
-`;
-const NavRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
-  gap: 1rem;
-`;
-const SectionLabel = styled.p`
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #718096;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 0.875rem;
-`;
-const StepRow = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-const StepPill = styled.span<{ $s: 'done' | 'active' | 'todo' }>`
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: ${({ $s }) => ($s === 'done' ? '#E1F5EE' : $s === 'active' ? '#0C2B5E' : '#F7FAFC')};
-  color: ${({ $s }) => ($s === 'done' ? '#0F6E56' : $s === 'active' ? '#fff' : '#718096')};
-  border: 0.5px solid
-    ${({ $s }) => ($s === 'done' ? '#6EE7B7' : $s === 'active' ? '#0C2B5E' : '#E2E8F0')};
-`;
-
-// ── Upload zone ───────────────────────────────────────────────────────────────
-const UploadZone = styled.div<{ $drag: boolean; $done: boolean; $err: boolean }>`
-  border: 2px dashed
-    ${({ $done, $err, $drag }) =>
-      $err ? '#E24B4A' : $done ? '#1D9E75' : $drag ? '#378ADD' : '#CBD5E0'};
-  border-radius: 12px;
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-  cursor: pointer;
-  background: ${({ $done, $drag }) => ($done ? '#F0FDF9' : $drag ? '#EBF4FF' : '#FAFBFC')};
-  transition: all 0.2s;
-  &:hover {
-    border-color: #378add;
-    background: #ebf4ff;
-  }
-`;
-const Spinner = styled.div`
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #0c2b5e;
-  border-radius: 50%;
-  animation: ${spin} 0.8s linear infinite;
-  margin: 0 auto 0.75rem;
-`;
-const PrefilledNote = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  background: #e1f5ee;
-  color: #0f6e56;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-`;
-
-// ── Consent checkbox ──────────────────────────────────────────────────────────
-const ConsentCard = styled.label<{ $checked: boolean }>`
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  cursor: pointer;
-  padding: 12px 14px;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-  transition: all 0.15s;
-  background: ${({ $checked }) => ($checked ? '#F0FDF9' : '#FAFBFC')};
-  border: 1.5px solid ${({ $checked }) => ($checked ? '#1D9E75' : '#E2E8F0')};
-`;
-const CheckBox = styled.div<{ $checked: boolean }>`
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  transition: all 0.15s;
-  border: 2px solid ${({ $checked }) => ($checked ? '#1D9E75' : '#CBD5E0')};
-  background: ${({ $checked }) => ($checked ? '#1D9E75' : '#fff')};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+import {
+  spin,
+  fadeUp,
+  PageWrap,
+  Grid2,
+  Field,
+  Label,
+  Req,
+  Input,
+  Select,
+  Textarea,
+  ErrMsg,
+  Hint,
+  CurrWrap,
+  CurrSym,
+  NavRow,
+  SectionLabel,
+  StepRow,
+  StepPill,
+  UploadZone,
+  Spinner,
+  PrefilledNote,
+  ConsentCard,
+  CheckBox,
+  SuccessIcon,
+  SuccessTitle,
+  SuccessText,
+  InfoBox,
+  WarningBox,
+  ErrorBox
+} from '../../styles/pages/LoanApplicationPage.styles';
 
 // ── Static options ────────────────────────────────────────────────────────────
 const SECTORS = [
@@ -458,44 +271,14 @@ const LoanApplicationPage: React.FC = () => {
             $padding="lg"
             style={{ textAlign: 'center', animation: `${fadeUp} .4s ease` }}
           >
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: '#D1FAE5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.75rem',
-                margin: '0 auto 1.25rem',
-              }}
-            >
-              ✓
-            </div>
-            <h2
-              style={{
-                fontFamily: "'Inter',sans-serif",
-                fontSize: '1.375rem',
-                color: '#0C2B5E',
-                margin: '0 0 .5rem',
-              }}
-            >
+            <SuccessIcon>✓</SuccessIcon>
+            <SuccessTitle>
               Submitted to AI analysis
-            </h2>
-            <p
-              style={{
-                fontSize: '.9375rem',
-                color: '#718096',
-                margin: '0 0 1.25rem',
-                maxWidth: '420px',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-              }}
-            >
+            </SuccessTitle>
+            <SuccessText>
               <strong>{appId}</strong> has been sent to the Credit Officer AI agent. Results will
               appear in the HITL Queue shortly.
-            </p>
+            </SuccessText>
             {uploadId && (
               <p
                 style={{
@@ -691,24 +474,15 @@ const LoanApplicationPage: React.FC = () => {
               </p>
             )}
 
-            <div
-              style={{
-                marginTop: '1.25rem',
-                padding: '.875rem 1rem',
-                background: '#F0F7FF',
-                borderRadius: '8px',
-                fontSize: '.8125rem',
-                color: '#1A56A0',
-              }}
-            >
+            <InfoBox>
               ℹ️ No document?{' '}
               <button
-                style={{ color: '#0C2B5E', fontWeight: 600, textDecoration: 'underline' }}
+                style={{ color: '#0C2B5E', fontWeight: 600, textDecoration: 'underline', background: 'none', border: 'none', padding: 0 }}
                 onClick={() => setStep(1)}
               >
                 Fill the form manually →
               </button>
-            </div>
+            </InfoBox>
           </Card>
         )}
 
@@ -857,19 +631,9 @@ const LoanApplicationPage: React.FC = () => {
             <SectionLabel>
               Financial figures — sent to AI agent <Req>*</Req>
             </SectionLabel>
-            <div
-              style={{
-                background: '#F0F7FF',
-                border: '1px solid #B5D4F4',
-                borderRadius: '8px',
-                padding: '.75rem 1rem',
-                marginBottom: '1rem',
-                fontSize: '.8125rem',
-                color: '#1A56A0',
-              }}
-            >
+            <InfoBox>
               ℹ️ These values are sent directly to Nathan's AI credit analysis engine.
-            </div>
+            </InfoBox>
             <Grid2>
               <Field>
                 <Label>
@@ -1067,35 +831,15 @@ const LoanApplicationPage: React.FC = () => {
             ))}
 
             {apiError && (
-              <div
-                style={{
-                  background: '#FFF5F5',
-                  border: '1px solid #FED7D7',
-                  borderRadius: '8px',
-                  padding: '.75rem 1rem',
-                  fontSize: '.875rem',
-                  color: '#C53030',
-                  margin: '.75rem 0',
-                }}
-              >
+              <ErrorBox>
                 ⚠️ {apiError}
-              </div>
+              </ErrorBox>
             )}
 
-            <div
-              style={{
-                background: '#FFFBEB',
-                border: '1px solid #FDE68A',
-                borderRadius: '8px',
-                padding: '.75rem 1rem',
-                fontSize: '.8125rem',
-                color: '#92400E',
-                margin: '.75rem 0 1.25rem',
-              }}
-            >
+            <WarningBox>
               ⚠️ By submitting you confirm all information is accurate and will be sent to the AI
               credit engine immediately.
-            </div>
+            </WarningBox>
 
             <NavRow>
               <Button

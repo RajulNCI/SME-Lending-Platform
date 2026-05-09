@@ -7,15 +7,20 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { getBorrowerApplications, type BorrowerApplication } from '../../services/AIApi';
 
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  th { text-align: left; padding: 0.75rem; border-bottom: 1px solid #E2E8F0; color: #4A5568; font-size: 0.875rem; }
-  td { padding: 0.75rem; border-bottom: 1px solid #E2E8F0; color: #2D3748; font-size: 0.875rem; }
-`;
-
+import { TableWrapper, Table, Thead, Th, Tbody, Tr, Td } from '../../components/ui/Table';
+import {
+  PageHeader,
+  HeaderSubtitle,
+  EmptyStateContainer,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+  RightsList,
+  RightItem,
+  RightIcon,
+  RightTitle,
+  RightDescription,
+} from '../../styles/pages/BorrowerPage.styles';
 
 const BorrowerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,26 +44,17 @@ const BorrowerPage: React.FC = () => {
   return (
     <PageLayout title="My Applications">
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.25rem',
-            flexWrap: 'wrap',
-            gap: '.75rem',
-          }}
-        >
-          <p style={{ fontSize: '.9375rem', color: '#718096', margin: 0 }}>
+        <PageHeader>
+          <HeaderSubtitle>
             Track your loan applications and decision status
-          </p>
+          </HeaderSubtitle>
           <Button
             $variant="primary"
             onClick={() => navigate('/borrower/apply')}
           >
             + New application
           </Button>
-        </div>
+        </PageHeader>
 
         <Card $padding="md">
           
@@ -66,50 +62,50 @@ const BorrowerPage: React.FC = () => {
           <CardDivider />
           
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>Loading applications...</div>
+            <EmptyStateContainer>Loading applications...</EmptyStateContainer>
           ) : apps.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
-              <p style={{ fontSize: '2rem', margin: '0 0 .75rem' }}>📋</p>
-              <p style={{ fontWeight: 600, color: '#0C2B5E', margin: '0 0 .5rem' }}>
+            <EmptyStateContainer>
+              <EmptyStateIcon>📋</EmptyStateIcon>
+              <EmptyStateTitle>
                 No applications yet
-              </p>
-              <p style={{ fontSize: '.875rem', color: '#718096', margin: '0 0 1.25rem' }}>
+              </EmptyStateTitle>
+              <EmptyStateDescription>
                 Submit your first application to get started.
                 <br />
                 Our AI engine will analyse your documents within minutes.
-              </p>
+              </EmptyStateDescription>
               <Button
                 $variant="primary"
                 onClick={() => navigate('/borrower/apply')}
               >
                 Start application →
               </Button>
-            </div>
+            </EmptyStateContainer>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <TableWrapper>
                 <Table>
-                    <thead>
-                        <tr>
-                            <th>Reference</th>
-                            <th>Amount</th>
-                            <th>Purpose</th>
-                            <th>Status</th>
-                            <th>Submitted</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                    <Thead>
+                        <Tr>
+                            <Th>Reference</Th>
+                            <Th>Amount</Th>
+                            <Th>Purpose</Th>
+                            <Th>Status</Th>
+                            <Th>Submitted</Th>
+                        </Tr>
+                    </Thead>
+                    <Tbody>
                         {apps.map(a => (
-                            <tr key={a.id}>
-                                <td style={{ fontFamily: 'monospace' }}>{a.reference}</td>
-                                <td>€{a.loan_amount.toLocaleString()}</td>
-                                <td>{a.loan_purpose}</td>
-                                <td><Badge $variant={a.status === 'approved' ? 'success' : a.status === 'declined' ? 'error' : 'warning'}>{a.status}</Badge></td>
-                                <td>{new Date(a.created_at).toLocaleDateString()}</td>
-                            </tr>
+                            <Tr key={a.id}>
+                                <Td style={{ fontFamily: 'monospace' }}>{a.reference}</Td>
+                                <Td>€{a.loan_amount.toLocaleString()}</Td>
+                                <Td>{a.loan_purpose}</Td>
+                                <Td><Badge $variant={a.status === 'approved' ? 'success' : a.status === 'declined' ? 'error' : 'warning'}>{a.status}</Badge></Td>
+                                <Td>{new Date(a.created_at).toLocaleDateString()}</Td>
+                            </Tr>
                         ))}
-                    </tbody>
+                    </Tbody>
                 </Table>
-            </div>
+            </TableWrapper>
           )}
 
         </Card>
@@ -120,7 +116,7 @@ const BorrowerPage: React.FC = () => {
         >
           <CardTitle>Your rights under GDPR Article 22</CardTitle>
           <CardDivider />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.625rem' }}>
+          <RightsList>
             {[
               {
                 icon: '📄',
@@ -138,33 +134,15 @@ const BorrowerPage: React.FC = () => {
                 desc: 'You can appeal any adverse decision — response within 30 days',
               },
             ].map((r) => (
-              <div
-                key={r.title}
-                style={{
-                  display: 'flex',
-                  gap: '.75rem',
-                  padding: '.875rem',
-                  background: '#F0F7FF',
-                  borderRadius: '8px',
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>{r.icon}</span>
+              <RightItem key={r.title}>
+                <RightIcon>{r.icon}</RightIcon>
                 <div>
-                  <p
-                    style={{
-                      fontWeight: 500,
-                      color: '#0C2B5E',
-                      margin: '0 0 .25rem',
-                      fontSize: '.875rem',
-                    }}
-                  >
-                    {r.title}
-                  </p>
-                  <p style={{ fontSize: '.8125rem', color: '#4A5568', margin: 0 }}>{r.desc}</p>
+                  <RightTitle>{r.title}</RightTitle>
+                  <RightDescription>{r.desc}</RightDescription>
                 </div>
-              </div>
+              </RightItem>
             ))}
-          </div>
+          </RightsList>
         </Card>
       </div>
     </PageLayout>

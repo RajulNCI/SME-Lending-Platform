@@ -14,14 +14,15 @@ const Content = styled.main`
 interface PageLayoutProps {
   title: string;
   notifCount?: number;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({ title, notifCount, children }) => (
+const PageLayout: React.FC<PageLayoutProps> = ({ title, notifCount, actions, children }) => (
   <Shell>
     <Sidebar />
     <Main>
-      <TopBar title={title} notifCount={notifCount} />
+      <TopBar title={title} notifCount={notifCount} actions={actions} />
       <Content>{children}</Content>
     </Main>
   </Shell>

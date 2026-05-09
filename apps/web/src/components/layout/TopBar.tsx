@@ -1,11 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
-import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
 
 const Bar = styled.header`
   display:flex;align-items:center;justify-content:space-between;
-  height:56px;padding:0 1.5rem;background:#fff;
+  height:64px;padding:0 1.5rem;background:#fff;
   border-bottom:.5px solid #E2E8F0;flex-shrink:0;
   position:sticky;top:0;z-index:10;
   @media(max-width:767px){padding:0 1rem;}
@@ -21,36 +21,55 @@ const LogoMark = styled.div`
   font-weight:700;font-size:.8125rem;color:#fff;
 `;
 const PageTitle = styled.h1`
-  font-family:'Inter',sans-serif;font-size:1rem;font-weight:600;
+  font-family:'Inter',sans-serif;font-size:1.125rem;font-weight:600;
   color:#0C2B5E;margin:0;
 `;
-const Right = styled.div`display:flex;align-items:center;gap:.75rem;`;
-const RoleChip = styled.div`
-  display:flex;align-items:center;gap:.5rem;padding:.25rem .75rem;
-  background:#F0F7FF;border-radius:6px;border:.5px solid #B5D4F4;
-  @media(max-width:480px){display:none;}
-`;
-const RoleText = styled.span`font-size:.75rem;font-weight:600;color:#0C2B5E;font-family:'Inter',sans-serif;`;
-const Avatar = styled.div`
-  width:30px;height:30px;border-radius:50%;background:#0C2B5E;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.6875rem;font-weight:700;color:#fff;flex-shrink:0;
-`;
-const NotifBtn = styled.button`
-  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;
-  justify-content:center;font-size:1rem;color:#718096;position:relative;
-  transition:background .12s;&:hover{background:#F7FAFC;}
-`;
-const NotifDot = styled.span`
-  position:absolute;top:5px;right:5px;width:7px;height:7px;
-  border-radius:50%;background:#E24B4A;border:2px solid #fff;
+const Right = styled.div`display:flex;align-items:center;gap:1rem;`;
+
+const TopBarUser = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 1rem;
+  border-left: 1px solid #E2E8F0;
 `;
 
-interface TopBarProps { title: string; notifCount?: number; }
+const UserDetails = styled.div`
+  text-align: right;
+  @media(max-width: 768px) { display: none; }
+`;
 
-const TopBar: React.FC<TopBarProps> = ({ title, notifCount = 0 }) => {
-  const { user } = useAuth();
-  const initials = user?.displayName.split(' ').map((n:string)=>n[0]).join('').toUpperCase() || 'U';
+const UserName = styled.div`
+  font-size: 13px;
+  font-weight: 500;
+  color: #0C2B5E;
+`;
+
+const UserRoleText = styled.div`
+  font-size: 10px;
+  color: #64748B;
+  font-family: 'IBM Plex Mono', monospace;
+`;
+
+const AvatarLg = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0C2B5E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+`;
+
+interface TopBarProps { title: string; notifCount?: number; actions?: React.ReactNode; }
+
+const TopBar: React.FC<TopBarProps> = ({ title, notifCount = 0, actions }) => {
+  const { user, logout } = useAuth();
+  const initials = user?.displayName?.split(' ').map((n:string)=>n[0]).join('').toUpperCase() || 'U';
 
   return (
     <Bar>
@@ -61,17 +80,15 @@ const TopBar: React.FC<TopBarProps> = ({ title, notifCount = 0 }) => {
         <PageTitle>{title}</PageTitle>
       </Left>
       <Right>
-        <Badge $variant="success" $dot>Live</Badge>
-        {user && (
-          <RoleChip>
-            <RoleText>{user.roleLabel}</RoleText>
-          </RoleChip>
-        )}
-        <NotifBtn>
-          🔔
-          {notifCount > 0 && <NotifDot />}
-        </NotifBtn>
-        <Avatar>{initials}</Avatar>
+        {actions}
+        <Button $variant="ghost" $size="sm" style={{fontSize:12}} onClick={logout}>→ Log Out</Button>
+        <TopBarUser>
+          <UserDetails>
+            <UserName>{user?.displayName || 'User'}</UserName>
+            <UserRoleText>{user?.roleLabel || 'Role'}</UserRoleText>
+          </UserDetails>
+          <AvatarLg>{initials}</AvatarLg>
+        </TopBarUser>
       </Right>
     </Bar>
   );

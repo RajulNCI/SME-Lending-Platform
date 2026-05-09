@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types/auth';
@@ -67,6 +67,12 @@ const SectionLabel = styled.p<{ $v: boolean }>`
   opacity: ${({ $v }) => ($v ? 1 : 0)};
   transition: opacity 0.15s;
   white-space: nowrap;
+  ${({ $v }) => !$v && `
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  `}
 `;
 const NavItem = styled(NavLink)<{ $c: boolean }>`
   display: flex;
@@ -104,6 +110,12 @@ const NavLabel = styled.span<{ $v: boolean }>`
   opacity: ${({ $v }) => ($v ? 1 : 0)};
   transition: opacity 0.15s;
   flex: 1;
+  white-space: nowrap;
+  ${({ $v }) => !$v && `
+    width: 0;
+    flex: none;
+    overflow: hidden;
+  `}
 `;
 const NavBadge = styled.span<{ $v: boolean; $n: number }>`
   background: ${({ $n }) => ($n > 0 ? '#E24B4A' : '#1A56A0')};
@@ -117,48 +129,11 @@ const NavBadge = styled.span<{ $v: boolean; $n: number }>`
   text-align: center;
   opacity: ${({ $v, $n }) => ($v && $n >= 0 ? 1 : 0)};
   transition: opacity 0.15s;
+  ${({ $v }) => !$v && `
+    display: none;
+  `}
 `;
-const UserRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.75rem 1rem;
-  border-top: 0.5px solid #1a56a0;
-`;
-const Avatar = styled.div`
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #1a56a0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.625rem;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-`;
-const UserInfo = styled.div<{ $v: boolean }>`
-  flex: 1;
-  min-width: 0;
-  opacity: ${({ $v }) => ($v ? 1 : 0)};
-  transition: opacity 0.15s;
-`;
-const UserName2 = styled.p`
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #fff;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-const UserRole2 = styled.p`
-  font-size: 0.625rem;
-  color: #85b7eb;
-  margin: 0;
-  white-space: nowrap;
-`;
+
 const CollapseBtn = styled.button<{ $c: boolean }>`
   display: flex;
   align-items: center;
@@ -174,29 +149,11 @@ const CollapseBtn = styled.button<{ $c: boolean }>`
     color: #fff;
   }
 `;
-const LogoutBtn = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  width: 100%;
-  padding: 0.5rem 0.875rem;
-  border-radius: 8px;
-  margin: 1px 0.375rem;
-  color: #f09595;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  transition:
-    background 0.12s,
-    color 0.12s;
-  &:hover {
-    background: #3d1a1a;
-    color: #fff;
-  }
-`;
+
 
 type NavSection = {
   label: string;
-  items: { icon: string; text: string; to: string; badge?: boolean }[];
+  items: { icon: string; text: string; to: string; badge?: boolean; end?: boolean }[];
 };
 
 const NAV: Record<UserRole, NavSection[]> = {
@@ -256,7 +213,7 @@ const NAV: Record<UserRole, NavSection[]> = {
     {
       label: 'Model Risk',
       items: [
-        { icon: '◉', text: 'Model inventory', to: '/mrm' },
+        { icon: '◉', text: 'Model inventory', to: '/mrm', end: true },
         { icon: '▦', text: 'PSI / Gini', to: '/mrm/metrics' },
         { icon: '⚑', text: 'Drift alerts', to: '/mrm/drift' },
       ],
@@ -278,7 +235,7 @@ const NAV: Record<UserRole, NavSection[]> = {
       label: 'My Applications',
       items: [
         { icon: '+', text: 'New application', to: '/borrower/apply' },
-        { icon: '☰', text: 'My applications', to: '/borrower' },
+        { icon: '☰', text: 'My applications', to: '/borrower', end: true },
         { icon: '✉', text: 'Messages', to: '/borrower/messages' },
       ],
     },
@@ -287,8 +244,7 @@ const NAV: Record<UserRole, NavSection[]> = {
 };
 
 const Sidebar: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
 
@@ -314,11 +270,7 @@ const Sidebar: React.FC = () => {
 
   if (!user) return null;
   const sections = NAV[user.role] || [];
-  const initials = user.displayName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase();
+
 
   return (
     <Wrap $c={collapsed}>
@@ -359,6 +311,7 @@ const Sidebar: React.FC = () => {
                   <NavItem
                     key={item.to}
                     to={item.to}
+                    end={item.end}
                     $c={collapsed}
                   >
                     <NavIcon>{item.icon}</NavIcon>
@@ -377,24 +330,7 @@ const Sidebar: React.FC = () => {
             )}
           </Section>
         ))}
-        <LogoutBtn
-          onClick={() => {
-            logout();
-            navigate('/login');
-          }}
-        >
-          <NavIcon>→</NavIcon>
-          <NavLabel $v={!collapsed}>Log out</NavLabel>
-        </LogoutBtn>
       </Nav>
-
-      <UserRow>
-        <Avatar>{initials}</Avatar>
-        <UserInfo $v={!collapsed}>
-          <UserName2>{user.displayName}</UserName2>
-          <UserRole2>{user.roleLabel}</UserRole2>
-        </UserInfo>
-      </UserRow>
 
       <CollapseBtn
         $c={collapsed}

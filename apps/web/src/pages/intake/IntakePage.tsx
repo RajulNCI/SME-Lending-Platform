@@ -6,21 +6,24 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 
-const StepList = styled.div`display:flex;flex-direction:column;gap:.75rem;`;
-const StepCard = styled.div`
-  display:flex;gap:1rem;padding:1.25rem;background:#F7FAFC;
-  border-radius:12px;border:.5px solid #E2E8F0;align-items:flex-start;
-`;
-const StepNum = styled.div<{$color:string}>`
-  width:40px;height:40px;border-radius:10px;background:${({$color})=>$color};
-  display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;
-`;
-const StepBody = styled.div`flex:1;`;
-const StepLabel = styled.p`font-size:.6875rem;font-weight:700;color:#1A56A0;text-transform:uppercase;letter-spacing:.08em;margin:0 0 .25rem;`;
-const StepTitle = styled.p`font-size:.9375rem;font-weight:600;color:#0C2B5E;margin:0 0 .375rem;`;
-const StepDesc = styled.p`font-size:.8125rem;color:#718096;margin:0 0 .625rem;line-height:1.6;`;
-const TagList = styled.div`display:flex;gap:.375rem;flex-wrap:wrap;`;
-const ItemTag = styled.span`font-size:.6875rem;padding:2px 8px;background:#EDF2F7;color:#4A5568;border-radius:4px;font-family:'IBM Plex Mono',monospace;`;
+import {
+  StepList,
+  StepCard,
+  StepNum,
+  StepBody,
+  StepLabel,
+  StepTitle,
+  StepDesc,
+  TagList,
+  ItemTag,
+  HeaderRow,
+  HeaderDesc,
+  StatsGrid,
+  StatCard,
+  StatLabel,
+  StatValue,
+  TitleDesc
+} from '../../styles/pages/IntakePage.styles';
 
 const IntakePage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,38 +48,38 @@ const IntakePage: React.FC = () => {
 
   return (
     <PageLayout title="Intake Pipeline" notifCount={3}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.25rem',flexWrap:'wrap',gap:'.75rem'}}>
+      <HeaderRow>
         <div>
-          <p style={{fontSize:'.8125rem',color:'#718096',margin:0}}>
+          <HeaderDesc>
             AI-powered loan application intake · IDP · Document Processing · Assessment
-          </p>
+          </HeaderDesc>
         </div>
         <Button $variant="primary" onClick={()=>navigate('/applications/new')}>
           + New application
         </Button>
-      </div>
+      </HeaderRow>
 
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'.75rem',marginBottom:'1.5rem'}}>
+      <StatsGrid>
         {[
           {label:'Applications today',value:'4',color:'#0C2B5E'},
           {label:'In processing',value:'1',color:'#BA7517'},
           {label:'Awaiting HITL',value:'2',color:'#A32D2D'},
           {label:'Completed today',value:'1',color:'#0F6E56'},
         ].map(s=>(
-          <div key={s.label} style={{background:'#F7FAFC',borderRadius:'10px',padding:'.875rem 1rem',border:'.5px solid #E2E8F0'}}>
-            <p style={{fontSize:'.6875rem',fontWeight:600,color:'#718096',textTransform:'uppercase',letterSpacing:'.05em',margin:'0 0 .25rem'}}>{s.label}</p>
-            <p style={{fontFamily:"'Inter',sans-serif",fontSize:'1.5rem',fontWeight:700,color:s.color,margin:0}}>{s.value}</p>
-          </div>
+          <StatCard key={s.label}>
+            <StatLabel>{s.label}</StatLabel>
+            <StatValue $color={s.color}>{s.value}</StatValue>
+          </StatCard>
         ))}
-      </div>
+      </StatsGrid>
 
       <Card $padding="md">
         <CardHeader>
           <div>
             <CardTitle>AI-powered loan application intake pipeline</CardTitle>
-            <p style={{fontSize:'.8125rem',color:'#718096',margin:'.25rem 0 0'}}>
+            <TitleDesc>
               FinPal is not a CRM. The core product is the AI-powered intake, document processing and credit assessment pipeline. The real value is in Steps 1–4: automating the slow, manual intake process that costs lenders hours per application.
-            </p>
+            </TitleDesc>
           </div>
           <Badge $variant="info">IDP · Assessment</Badge>
         </CardHeader>

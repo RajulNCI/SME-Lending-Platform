@@ -1,6 +1,19 @@
 import React from 'react';
 import styles from '../../styles/borrower.module.css';
-
+import {
+  HeaderContainer,
+  Title,
+  StepsContainer,
+  StepRow,
+  StepTextContainer,
+  StepLabel,
+  StepSubLabel,
+  StepStatus,
+  ResultCard,
+  ResultIcon,
+  ResultTitle,
+  ResultDescription,
+} from '../../styles/features/borrower/ProgressTracker.styles';
 interface ProgressTrackerProps {
   currentStep: number;
   isComplete: boolean;
@@ -28,168 +41,103 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 
   return (
     <div className={styles.processCard}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-        <h2
-          className={styles.sectionTitle}
-          style={{ fontSize: 18 }}
-        >
+      <HeaderContainer>
+        <Title className={styles.sectionTitle}>
           Processing Application
-        </h2>
+        </Title>
         <span className={styles.loanBadge}>{appId}</span>
-      </div>
+      </HeaderContainer>
 
       {/* ✅ FIX 2: stop spinner while waiting for officer */}
       {!isComplete && !isAwaitingOfficer && <div className={styles.bigSpinner} />}
 
-      <div style={{ marginTop: 32 }}>
+      <StepsContainer>
         {STEPS.map((s, i) => {
           const stepIsAwaiting = isAwaitingOfficer && i === 4;
           const done = i < currentStep || (decision === 'approved' && i <= 5);
           const active = i === currentStep && !isComplete && !isAwaitingOfficer;
 
           return (
-            <div
-              key={i}
-              style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}
-            >
+            <StepRow key={i}>
               <div
                 className={`${styles.stepDotBase} ${done ? styles.stepDotDone : stepIsAwaiting ? styles.stepDotPending : active ? styles.stepDotActive : styles.stepDotPending}`}
               >
                 {done ? '✓' : i + 1}
               </div>
-              <div style={{ marginLeft: 16 }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: active || stepIsAwaiting ? 700 : 500,
-                    color: active || done || stepIsAwaiting ? '#0F2D6B' : '#64748B',
-                    fontFamily: "'Syne', sans-serif",
-                  }}
-                >
+              <StepTextContainer>
+                <StepLabel $active={active} $awaiting={stepIsAwaiting} $done={done}>
                   {s.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: '#64748B',
-                    fontFamily: "'DM Mono', monospace",
-                    marginTop: 2,
-                  }}
-                >
+                </StepLabel>
+                <StepSubLabel>
                   {s.sub}
-                </div>
-              </div>
+                </StepSubLabel>
+              </StepTextContainer>
               {active && (
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    fontSize: 10,
-                    color: '#2563EB',
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                >
+                <StepStatus $color="#2563EB">
                   Running...
-                </div>
+                </StepStatus>
               )}
               {stepIsAwaiting && (
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    fontSize: 10,
-                    color: '#D97706',
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                >
+                <StepStatus $color="#D97706">
                   Awaiting Officer...
-                </div>
+                </StepStatus>
               )}
               {decision && i === 4 && (
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    fontSize: 10,
-                    color:
-                      decision === 'approved'
-                        ? '#059669'
-                        : decision === 'referred'
-                          ? '#D97706'
-                          : '#DC2626',
-                    fontFamily: "'DM Mono', monospace",
-                    fontWeight: 700,
-                  }}
+                <StepStatus
+                  $color={
+                    decision === 'approved'
+                      ? '#059669'
+                      : decision === 'referred'
+                        ? '#D97706'
+                        : '#DC2626'
+                  }
+                  $weight={700}
                 >
                   {decision.toUpperCase()}
-                </div>
+                </StepStatus>
               )}
-            </div>
+            </StepRow>
           );
         })}
-      </div>
+      </StepsContainer>
 
       {isComplete && decision === 'approved' && (
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: 32,
-            padding: 20,
-            background: '#F0FDF9',
-            borderRadius: 8,
-            border: '1px solid rgba(5,150,105,.2)',
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>✅</div>
-          <div style={{ fontWeight: 700, color: '#065F46', marginBottom: 4 }}>
+        <ResultCard $variant="approved">
+          <ResultIcon>✅</ResultIcon>
+          <ResultTitle $color="#065F46">
             Application Approved!
-          </div>
-          <div style={{ fontSize: 12, color: '#047857' }}>
+          </ResultTitle>
+          <ResultDescription $color="#047857">
             Your application has been approved by the Credit Officer. Funds are now being released
             to your ledger.
-          </div>
-        </div>
+          </ResultDescription>
+        </ResultCard>
       )}
 
       {isComplete && decision === 'declined' && (
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: 32,
-            padding: 20,
-            background: '#FEF2F2',
-            borderRadius: 8,
-            border: '1px solid rgba(220,38,38,.2)',
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>❌</div>
-          <div style={{ fontWeight: 700, color: '#991B1B', marginBottom: 4 }}>
+        <ResultCard $variant="declined">
+          <ResultIcon>❌</ResultIcon>
+          <ResultTitle $color="#991B1B">
             Application Declined
-          </div>
-          <div style={{ fontSize: 12, color: '#B91C1C' }}>
+          </ResultTitle>
+          <ResultDescription $color="#B91C1C">
             Unfortunately, we cannot proceed with your application at this time. Please see your
             rights under GDPR Article 22 for an explanation.
-          </div>
-        </div>
+          </ResultDescription>
+        </ResultCard>
       )}
 
       {isComplete && decision === 'referred' && (
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: 32,
-            padding: 20,
-            background: '#FFFBEB',
-            borderRadius: 8,
-            border: '1px solid rgba(217,119,6,.2)',
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>↗️</div>
-          <div style={{ fontWeight: 700, color: '#92400E', marginBottom: 4 }}>
+        <ResultCard $variant="referred">
+          <ResultIcon>↗️</ResultIcon>
+          <ResultTitle $color="#92400E">
             Manual Approval Needed
-          </div>
-          <div style={{ fontSize: 12, color: '#B45309' }}>
+          </ResultTitle>
+          <ResultDescription $color="#B45309">
             Your application has been referred for further manual review by the Credit Committee. We
             will contact you shortly.
-          </div>
-        </div>
+          </ResultDescription>
+        </ResultCard>
       )}
     </div>
   );

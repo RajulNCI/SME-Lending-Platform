@@ -2,16 +2,34 @@ import React from 'react';
 import PageLayout from '../../components/layout/PageLayout';
 import { Card, CardTitle, CardDivider } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import {
+  MrmGrid,
+  SourceNote,
+  InventoryHeader,
+  MetricRow,
+  MetricKey,
+  MetricValue,
+  DriftStatus,
+  DriftIcon,
+  DriftTitle,
+  DriftDesc,
+  TriggerLabel,
+  TriggerRow,
+  TriggerKey,
+  TriggerValue
+} from '../../styles/pages/MrmPage.styles';
+
 const DYNAMIC = 'MRM metrics from GET /api/v1/models/monitoring — daily scorecard pipeline';
+
 const MrmPage: React.FC = () => (
   <PageLayout title="Model Risk Management">
-    <p style={{fontSize:'.75rem',color:'#A0AEC0',marginBottom:'1rem',fontStyle:'italic'}}>{DYNAMIC}</p>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem',marginBottom:'1rem'}}>
+    <SourceNote>{DYNAMIC}</SourceNote>
+    <MrmGrid>
       <Card $padding="md">
-        <div style={{display:'flex',justifyContent:'space-between',marginBottom:'.75rem'}}>
+        <InventoryHeader>
           <CardTitle>Model inventory</CardTitle>
           <Badge $variant="success">Active</Badge>
-        </div>
+        </InventoryHeader>
         <CardDivider />
         {[
           {k:'Current champion',v:'finpal-pd-v2.4.1'},
@@ -22,34 +40,35 @@ const MrmPage: React.FC = () => (
           {k:'Gini',v:'0.68 ≥ 0.60 ✓'},
           {k:'PSI (monthly)',v:'0.04 < 0.10 ✓'},
         ].map(r=>(
-          <div key={r.k} style={{display:'flex',justifyContent:'space-between',padding:'.5rem 0',borderBottom:'.5px solid #F0F0F0',fontSize:'.8125rem'}}>
-            <span style={{color:'#718096'}}>{r.k}</span>
-            <span style={{fontWeight:600,color:'#0C2B5E',fontFamily:"'IBM Plex Mono',monospace"}}>{r.v}</span>
-          </div>
+          <MetricRow key={r.k}>
+            <MetricKey>{r.k}</MetricKey>
+            <MetricValue>{r.v}</MetricValue>
+          </MetricRow>
         ))}
       </Card>
       <Card $padding="md">
         <CardTitle>Drift monitoring</CardTitle>
         <CardDivider />
-        <div style={{padding:'1rem 0',textAlign:'center'}}>
-          <div style={{fontSize:'3rem',marginBottom:'.5rem'}}>✓</div>
-          <p style={{fontWeight:600,color:'#0F6E56',margin:'0 0 .25rem'}}>No drift detected</p>
-          <p style={{fontSize:'.8125rem',color:'#718096',margin:0}}>PSI 0.04 — well below 0.10 threshold</p>
-        </div>
+        <DriftStatus>
+          <DriftIcon>✓</DriftIcon>
+          <DriftTitle>No drift detected</DriftTitle>
+          <DriftDesc>PSI 0.04 — well below 0.10 threshold</DriftDesc>
+        </DriftStatus>
         <CardDivider />
-        <p style={{fontSize:'.8125rem',color:'#718096',marginBottom:'.5rem'}}>Drift alert triggers:</p>
+        <TriggerLabel>Drift alert triggers:</TriggerLabel>
         {[
           {label:'PSI threshold',value:'≥ 0.10 (currently 0.04)'},
           {label:'Gini drop',value:'≥ 10% decline'},
           {label:'KS statistic',value:'≥ 10% drop'},
         ].map(r=>(
-          <div key={r.label} style={{display:'flex',justifyContent:'space-between',padding:'.375rem 0',fontSize:'.8125rem'}}>
-            <span style={{color:'#718096'}}>{r.label}</span>
-            <span style={{color:'#0C2B5E',fontFamily:"'IBM Plex Mono',monospace"}}>{r.value}</span>
-          </div>
+          <TriggerRow key={r.label}>
+            <TriggerKey>{r.label}</TriggerKey>
+            <TriggerValue>{r.value}</TriggerValue>
+          </TriggerRow>
         ))}
       </Card>
-    </div>
+    </MrmGrid>
   </PageLayout>
 );
+
 export default MrmPage;
