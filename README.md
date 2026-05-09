@@ -2,8 +2,8 @@
 
 **Next-Generation All-in-One SME Credit Platform** — Automated underwriting, real-time decisioning, SEPA instant payments, and full EU regulatory compliance, built for scale and security.
 
-![CI](https://github.com/creditcore/creditcore/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://codecov.io/gh/creditcore/creditcore/branch/main/graph/badge.svg)
+![CI](https://github.com/RajulNCI/SME-Lending-Platform/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://codecov.io/gh/RajulNCI/SME-Lending-Platform/branch/main/graph/badge.svg)
 ![Security](https://img.shields.io/badge/Security-OWASP_ZAP%20%7C%20SAST-brightgreen)
 ![React](https://img.shields.io/badge/Frontend-React_18-61DAFB?logo=react)
 ![Python](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)
@@ -98,8 +98,8 @@ Security is a first-class citizen in the FinPal platform. Our automated CI/CD pi
 
 ### 2. Installation
 ```bash
-git clone https://github.com/creditcore/creditcore.git
-cd creditcore
+git clone https://github.com/RajulNCI/SME-Lending-Platform.git
+cd SME-Lending-Platform
 
 # Install Frontend & Workspace dependencies
 pnpm install

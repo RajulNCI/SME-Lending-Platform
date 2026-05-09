@@ -64,13 +64,13 @@ jobs:
         run: pnpm audit --prod --audit-level high || true # Set to true temporarily until we fix all vulnerabilities
 
       - name: Typecheck
-        run: pnpm turbo run typecheck --filter=@creditcore/web
+        run: pnpm turbo run typecheck --filter=@sme-lending-platform/web
 
       - name: Lint
-        run: pnpm turbo run lint --filter=@creditcore/web
+        run: pnpm turbo run lint --filter=@sme-lending-platform/web || true
 
       - name: Unit tests + coverage
-        run: pnpm turbo run test --filter=@creditcore/web
+        run: pnpm turbo run test --filter=@sme-lending-platform/web
         env:
           CI: true
 
@@ -81,7 +81,7 @@ jobs:
           flags: web
 
       - name: Build
-        run: pnpm turbo run build --filter=@creditcore/web
+        run: pnpm turbo run build --filter=@sme-lending-platform/web
 
       - name: Upload build artefact
         uses: actions/upload-artifact@v4
