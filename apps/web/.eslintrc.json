@@ -7,14 +7,15 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:react-hooks/recommended"
+    "plugin:react-hooks/recommended",
+    "plugin:security/recommended-legacy"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "react-hooks", "react-refresh"],
+  "plugins": ["@typescript-eslint", "react-hooks", "react-refresh", "security"],
   "rules": {
     "@typescript-eslint/no-unused-vars": [
       "error",

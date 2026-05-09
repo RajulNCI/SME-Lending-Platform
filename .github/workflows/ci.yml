@@ -60,6 +60,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: pnpm audit (Dependency vulnerabilities)
+        run: pnpm audit --prod --audit-level high || true # Set to true temporarily until we fix all vulnerabilities
+
       - name: Typecheck
         run: pnpm turbo run typecheck --filter=@creditcore/web
 
@@ -168,6 +171,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # ── DAST: Dynamic Application Security Testing (OWASP ZAP) ────────────────
+  dast:
+    name: DAST (OWASP ZAP)
+    runs-on: ubuntu-latest
+    needs: [web, api]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # In a real scenario, we would spin up the frontend and backend in docker here.
+      # For now, we simulate DAST running against a placeholder or staging URL.
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'https://finpals-prototype.vercel.app' # Replace with actual staging URL or local docker instance
+          fail_action: false # Set to false initially to review reports without blocking CI
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
   # ── Terraform validate (infra changes only) ────────────────────────────────
   infra-validate:
     name: Terraform validate
@@ -191,7 +213,7 @@ jobs:
   ci-gate:
     name: CI gate
     runs-on: ubuntu-latest
-    needs: [web, api, secrets-scan]
+    needs: [web, api, secrets-scan, dast]
     if: always()
     steps:
       - name: Check results
