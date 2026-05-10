@@ -1,0 +1,107 @@
+/* ─────────────────────────────────────────────
+   variables.css
+   Single source of truth for all design tokens.
+   Matches Vinayak's FinPal dark navy theme exactly.
+   ───────────────────────────────────────────── */
+
+:root {
+  /* ── Colour palette ── */
+  --navy: #0f2d6b;
+  --navy-dark: #0b1f3a;
+  --navy-mid: #dbeafe;
+  --teal: #2563eb;
+  --teal-dark: #1d4ed8;
+  --teal-glow: rgba(37, 99, 235, 0.15);
+  --teal-dim: rgba(37, 99, 235, 0.08);
+  --ice: #eff6ff;
+  --white: #ffffff;
+  --muted: #64748b;
+  --slate: #334155;
+  --gold: #3b82f6;
+  --red: #1e3a8a;
+  --green: #2563eb;
+  --bg: #eff6ff;
+  --border: rgba(37, 99, 235, 0.18);
+  --border-mid: rgba(37, 99, 235, 0.08);
+
+  /* ── Status colours ── */
+  --status-pass: #059669;
+  --status-pass-bg: rgba(5, 150, 105, 0.08);
+  --status-pass-border: rgba(5, 150, 105, 0.25);
+  --status-warn: #d97706;
+  --status-warn-bg: rgba(245, 158, 11, 0.08);
+  --status-warn-border: rgba(245, 158, 11, 0.3);
+  --status-fail: #dc2626;
+  --status-fail-bg: rgba(220, 38, 38, 0.06);
+  --status-fail-border: rgba(220, 38, 38, 0.2);
+
+  /* ── Sidebar (dark) ── */
+  --sidebar-bg: #0f2d6b;
+  --sidebar-text: rgba(255, 255, 255, 0.65);
+  --sidebar-active: rgba(37, 99, 235, 0.25);
+  --sidebar-muted: rgba(255, 255, 255, 0.4);
+
+  /* ── Typography ── */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-head: var(--font-family);
+  --font-mono: var(--font-family);
+  --font-body: var(--font-family);
+
+  /* ── Spacing / radius ── */
+  --r: 6px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 1px 3px rgba(15, 45, 107, 0.06), 0 4px 12px rgba(15, 45, 107, 0.08);
+  --shadow-btn: 0 4px 16px rgba(37, 99, 235, 0.35);
+  --shadow-modal: 0 8px 40px rgba(15, 45, 107, 0.2);
+
+  /* ── Transitions ── */
+  --transition: all 0.15s ease;
+  --transition-slow: all 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────
+   Global resets & base
+   ───────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+textarea,
+input,
+select {
+  font-family: var(--font-body);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--navy-mid);
+  border-radius: 99px;
+}
