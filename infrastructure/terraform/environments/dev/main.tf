@@ -19,13 +19,12 @@ module "vpc" {
 }
 
 module "rds" {
-  source                = "../../modules/rds"
-  project_name          = var.project_name
-  environment           = var.environment
-  vpc_id                = module.vpc.vpc_id
-  private_subnet_ids    = module.vpc.private_subnet_ids
-  ecs_security_group_id = module.ecs.ecs_security_group_id
-  db_password           = var.db_password
+  source             = "../../modules/rds"
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  db_password        = var.db_password
 }
 
 module "ecs" {
@@ -38,10 +37,11 @@ module "ecs" {
   private_subnet_ids = module.vpc.private_subnet_ids
   lab_role_arn       = data.aws_iam_role.lab_role.arn
 
-  db_endpoint = module.rds.db_endpoint
-  db_name     = module.rds.db_name
-  db_username = "postgres"
-  db_password = var.db_password
+  db_endpoint           = module.rds.db_endpoint
+  db_name               = module.rds.db_name
+  db_username           = "postgres"
+  db_password           = var.db_password
+  rds_security_group_id = module.rds.rds_security_group_id
 }
 
 module "cognito" {
