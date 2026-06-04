@@ -154,3 +154,4 @@ pnpm format        # Auto-format with Prettier
 ---
 
 *FinPal — Engineering Trust in SME Lending.*
+<!-- contributor access verified -->
