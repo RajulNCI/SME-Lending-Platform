@@ -23,6 +23,13 @@ dependencies = [
   "structlog>=24.1",
   "python-dotenv>=1.0",
   "aiofiles>=23.0",
+  # AI credit-decisioning engine (Engine 2)
+  "scikit-learn>=1.5",
+  "lightgbm>=4.0",
+  "shap>=0.45",
+  "joblib>=1.3",
+  "pandas>=2.0",
+  "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
