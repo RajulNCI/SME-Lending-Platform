@@ -9,19 +9,31 @@ import json
 import os
 import sys
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8")  # show € correctly on Windows consoles
+except Exception:  # noqa: BLE001
+    pass
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.ai.assessment_service import assess  # noqa: E402
 
 SAMPLES = [
-    {  # strong applicant
-        "company_name": "Shannon Logistics Ltd", "sector": "Logistics", "years_trading": "12",
-        "annual_revenue": 2_400_000, "net_profit": 240_000, "total_assets": 1_800_000,
-        "total_liabilities": 600_000, "existing_debt": 250_000, "monthly_repayment": 3_100,
-        "loan_amount": 150_000, "loan_term_months": 60, "loan_purpose": "Working Capital",
+    {  # strong (expect APPROVE)
+        "company_name": "Shannon Logistics Ltd", "sector": "Logistics", "years_trading": "11",
+        "annual_revenue": 1_800_000, "net_profit": 150_000, "total_assets": 1_400_000,
+        "total_liabilities": 520_000, "existing_debt": 350_000, "monthly_repayment": 5_500,
+        "loan_amount": 180_000, "loan_term_months": 60, "loan_purpose": "Working Capital",
         "has_collateral": True,
     },
-    {  # weak applicant
+    {  # decent mid-market (expect APPROVE, lower grade)
+        "company_name": "Grafton Retail Ltd", "sector": "Retail", "years_trading": "4",
+        "annual_revenue": 900_000, "net_profit": 54_000, "total_assets": 600_000,
+        "total_liabilities": 360_000, "existing_debt": 180_000, "monthly_repayment": 2_400,
+        "loan_amount": 110_000, "loan_term_months": 48, "loan_purpose": "Inventory Financing",
+        "has_collateral": False,
+    },
+    {  # weak (expect DECLINE)
         "company_name": "Temple Catering Ltd", "sector": "Hospitality", "years_trading": "2",
         "annual_revenue": 420_000, "net_profit": 8_000, "total_assets": 250_000,
         "total_liabilities": 210_000, "existing_debt": 160_000, "monthly_repayment": 0,
