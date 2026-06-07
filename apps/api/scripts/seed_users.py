@@ -8,11 +8,10 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.core.config import settings
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from app.core.security import hash_password
 from app.models.user import User, UserRole
-from app.core.database import Base
+from app.core.database import Base, make_engine
 
 DEMO_USERS = [
     {"username":"credit.officer",      "email":"co@finpal.ie",   "display_name":"Jane Smith",    "role":UserRole.credit_officer,      "password":"FinPal@CO1"},
@@ -27,7 +26,7 @@ DEMO_USERS = [
 
 
 async def seed() -> None:
-    engine = create_async_engine(settings.DATABASE_URL, echo=False)
+    engine = make_engine(echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
