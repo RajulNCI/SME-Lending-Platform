@@ -16,6 +16,10 @@ from app.middleware.cors import add_cors
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle."""
+    import asyncio
+    from app.services.queue import job_queue
+    from app.services.ai.worker import worker_loop
+
     setup_logging()
     logger.info("finpal.startup", environment=settings.ENVIRONMENT, version=settings.VERSION)
 
@@ -24,8 +28,13 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
+    # background worker consuming the processing queue (mirrors the HLD Lambda worker)
+    worker_task = asyncio.create_task(worker_loop(job_queue))
+    logger.info("finpal.worker.started")
+
     yield
 
+    worker_task.cancel()
     logger.info("finpal.shutdown")
     await engine.dispose()
 
