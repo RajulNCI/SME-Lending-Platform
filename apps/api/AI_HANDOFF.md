@@ -63,6 +63,24 @@ So the database choice is the **backend's** decision, not the AI's:
   flow on Neon; the platform can either reuse them (porting persistence) or just call the AI
   services from its own DynamoDB worker. The integration contract is the JSON, not the schema.
 
+**Production integration — the backend calls two stateless endpoints (no DB on the AI side):**
+- `POST /api/v1/extract` — multipart file → extracted fields JSON (auto-populate the form).
+- `POST /api/v1/assess` — JSON application fields (+ optional `reference`) → full assessment JSON
+  (`pd, risk_grade, ai_score, dscr, apr, affordability, lgd, ead, ecl_12m, ifrs9_stage,
+  shap_codes, recommendation, narrative, model_version`).
+
+Both are pure JSON-in/JSON-out. Deploy the AI as a container (ECS) or Lambda; in production use
+**AWS Textract** for OCR and **SQS** for the queue (already abstracted). The backend persists the
+returned JSON to **DynamoDB**.
+
+```bash
+# example
+curl -X POST $API/api/v1/assess -H "Authorization: Bearer $T" -H "Content-Type: application/json" \
+  -d '{"sector":"Logistics","annual_revenue":2400000,"net_profit":240000,"loan_amount":120000,
+       "loan_term_months":60,"loan_purpose":"Working Capital","has_collateral":true,"reference":"app-123"}'
+# -> {"application_id":"app-123","pd":0.01,"risk_grade":"A","recommendation":"approve", ...}
+```
+
 ## Outstanding
 - 🔴 Reset the Neon DB password and update `.env` (a dev password was used during testing).
 - Add an `ebitda` column to `applications` if you want extracted EBITDA persisted (currently it

@@ -23,6 +23,7 @@ API docs: http://localhost:8000/docs
 | POST | /api/v1/applications | Any | Create application |
 | GET | /api/v1/applications/{id} | Any | Application detail |
 | **POST** | **/api/v1/extract** | Any | **Extract fields from a document (auto-populate form)** |
+| **POST** | **/api/v1/assess** | Any | **Stateless AI assessment — fields in → JSON out (prod integration)** |
 | **POST** | **/api/v1/applications/{id}/submit** | Borrower+ | **Async submit → queue → worker** |
 | **GET** | **/api/v1/applications/{id}/status** | Any | **Poll live processing status/progress** |
 | **POST** | **/api/v1/applications/{id}/assess** | Credit Officer+ | **Run the AI assessment (Engine 2)** |
