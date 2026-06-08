@@ -5,12 +5,15 @@ Digital formats (docx/xlsx/pdf) are parsed directly (no OCR). Images (jpg/png/jp
 PDFs go through a pluggable OCR adapter — wire in AWS Textract / PaddleOCR / Tesseract in
 production. The trained extractor then runs on the resulting text regardless of source.
 """
+
 from __future__ import annotations
+
 from pathlib import Path
 
 
 def parse_docx(path) -> str:
     from docx import Document
+
     doc = Document(str(path))
     parts = [p.text for p in doc.paragraphs if p.text.strip()]
     for table in doc.tables:
@@ -21,6 +24,7 @@ def parse_docx(path) -> str:
 
 def parse_xlsx(path) -> str:
     from openpyxl import load_workbook
+
     wb = load_workbook(str(path), data_only=True)
     out = []
     for ws in wb.worksheets:
@@ -33,6 +37,7 @@ def parse_xlsx(path) -> str:
 
 def parse_pdf(path) -> str:
     import pdfplumber
+
     with pdfplumber.open(str(path)) as pdf:
         return "\n".join((pg.extract_text() or "") for pg in pdf.pages)
 
@@ -44,13 +49,14 @@ def ocr_image(path, engine=None) -> str:
         return engine(path)
     try:
         from rapidocr_onnxruntime import RapidOCR
+
         res, _ = RapidOCR()(str(path))
         return "\n".join(line[1] for line in (res or []))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise RuntimeError(
             "No OCR engine available. Pass `engine=` (Textract/PaddleOCR/Tesseract) "
             f"or install rapidocr-onnxruntime. ({type(exc).__name__})"
-        )
+        ) from exc
 
 
 def document_to_text(path, ocr_engine=None) -> str:

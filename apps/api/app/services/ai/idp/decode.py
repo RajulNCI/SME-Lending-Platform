@@ -1,5 +1,7 @@
 """decode — turn token/label sequences into structured field values (shared by train + serve)."""
+
 from __future__ import annotations
+
 import re
 
 MONEY = {"REVENUE", "EBITDA", "NETPROFIT", "ASSETS", "LIABILITIES", "DEBT", "LOANAMT"}
@@ -29,15 +31,19 @@ def extract_fields(tokens, labels) -> dict:
             out[cur_tag] = parse_money(val) if cur_tag in MONEY else val
         cur_tag, cur = None, []
 
-    for t, l in zip(tokens, labels):
-        if l == "O":
+    for t, lab in zip(tokens, labels, strict=False):
+        if lab == "O":
             flush()
-        elif l.startswith("B-"):
-            flush(); cur_tag = l[2:]; cur = [t]
-        elif l.startswith("I-"):
-            if cur_tag == l[2:]:
+        elif lab.startswith("B-"):
+            flush()
+            cur_tag = lab[2:]
+            cur = [t]
+        elif lab.startswith("I-"):
+            if cur_tag == lab[2:]:
                 cur.append(t)
             else:
-                flush(); cur_tag = l[2:]; cur = [t]
+                flush()
+                cur_tag = lab[2:]
+                cur = [t]
     flush()
     return out

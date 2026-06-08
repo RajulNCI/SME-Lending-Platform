@@ -5,11 +5,20 @@ DSCR, affordability, risk-based APR pricing, LGD/EAD, IFRS 9 stage + 12-month EC
 assist recommendation. These are formulas / policy rules, kept separate from the ML model so
 they are transparent and auditable.
 """
+
 from __future__ import annotations
 
 # risk-based pricing grid (added to base rate), by grade
-_BASE_RATE = 4.5            # % p.a.
-_GRADE_PREMIUM = {"A": 1.0, "B": 2.0, "C": 3.5, "D": 5.5, "E": 8.0, "F": 11.0, "G": 15.0}
+_BASE_RATE = 4.5  # % p.a.
+_GRADE_PREMIUM = {
+    "A": 1.0,
+    "B": 2.0,
+    "C": 3.5,
+    "D": 5.5,
+    "E": 8.0,
+    "F": 11.0,
+    "G": 15.0,
+}
 
 
 def affordability(derived: dict) -> float:
@@ -22,7 +31,7 @@ def affordability(derived: dict) -> float:
 def apr(grade: str, term_months: int, has_collateral: bool) -> float:
     """Risk-based APR (% p.a.)."""
     rate = _BASE_RATE + _GRADE_PREMIUM.get(grade, 12.0)
-    rate += 0.002 * max(term_months - 36, 0)        # small term premium
+    rate += 0.002 * max(term_months - 36, 0)  # small term premium
     if has_collateral:
         rate -= 1.0
     return round(min(max(rate, 4.0), 25.0), 3)

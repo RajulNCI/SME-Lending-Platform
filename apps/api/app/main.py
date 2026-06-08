@@ -2,14 +2,16 @@
 FinPal API — FastAPI application entry point.
 Registers all routers, middleware, and startup/shutdown events.
 """
+
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.core.config import settings
-from app.core.logging import setup_logging, logger
-from app.core.database import engine, Base
 from app.api.v1.router import router as api_v1_router
+from app.core.config import settings
+from app.core.database import Base, engine
+from app.core.logging import logger, setup_logging
 from app.middleware.cors import add_cors
 
 
@@ -17,11 +19,14 @@ from app.middleware.cors import add_cors
 async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle."""
     import asyncio
-    from app.services.queue import job_queue
+
     from app.services.ai.worker import worker_loop
+    from app.services.queue import job_queue
 
     setup_logging()
-    logger.info("finpal.startup", environment=settings.ENVIRONMENT, version=settings.VERSION)
+    logger.info(
+        "finpal.startup", environment=settings.ENVIRONMENT, version=settings.VERSION
+    )
 
     # Create tables if they don't exist (use Alembic in production)
     if settings.ENVIRONMENT in ("development", "test"):

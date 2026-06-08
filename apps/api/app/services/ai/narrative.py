@@ -4,6 +4,7 @@ narrative — plain-language explanation of the assessment for the credit office
 Template-based for now (deterministic, no external calls). The guardrailed LLM described in
 the SDD can replace `generate()` later; it only ever *explains* the numbers, never decides.
 """
+
 from __future__ import annotations
 
 
@@ -21,13 +22,15 @@ def generate(result: dict) -> str:
     pd_pct = result["pd"] * 100
     top = result.get("shap_codes") or []
     drivers = ", ".join(
-        f"{c['feature'].lower()} ({'-' if c['direction']=='reduces_risk' else '+'})"
+        f"{c['feature'].lower()} ({'-' if c['direction'] == 'reduces_risk' else '+'})"
         for c in top[:3]
     )
     rec = result["recommendation"]
-    lead = {"approve": "Recommended for approval",
-            "refer": "Referred for manual review",
-            "decline": "Recommended for decline"}[rec]
+    lead = {
+        "approve": "Recommended for approval",
+        "refer": "Referred for manual review",
+        "decline": "Recommended for decline",
+    }[rec]
     return (
         f"{lead}. Risk grade {result['risk_grade']} with an estimated probability of default "
         f"of {pd_pct:.1f}%. Debt service coverage (DSCR) of {result['dscr']:.2f} indicates "

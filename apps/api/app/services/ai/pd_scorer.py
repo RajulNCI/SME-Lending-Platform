@@ -5,7 +5,9 @@ Produces the calibrated PD, the risk grade, the 0-100 credit score, and per-appl
 reason codes (SHAP for tree models; standardized-coefficient contributions for the linear
 scorecard). The model artifact is loaded once and cached.
 """
+
 from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
 
@@ -14,21 +16,36 @@ import pandas as pd
 
 ARTIFACT = Path(__file__).resolve().parent / "artifacts" / "finpal_pd_model.joblib"
 
-_GRADE_BANDS = [(0.02, "A"), (0.05, "B"), (0.10, "C"), (0.18, "D"), (0.30, "E"), (0.45, "F")]
+_GRADE_BANDS = [
+    (0.02, "A"),
+    (0.05, "B"),
+    (0.10, "C"),
+    (0.18, "D"),
+    (0.30, "E"),
+    (0.45, "F"),
+]
 # friendlier labels for reason codes
 _PRETTY = {
-    "dscr": "Debt service coverage (DSCR)", "interest_coverage": "Interest coverage",
-    "leverage": "Leverage (liabilities/assets)", "years_trading": "Years trading",
-    "net_profit": "Net profit", "ebitda": "EBITDA", "loan_to_revenue": "Loan-to-revenue",
-    "debt_to_revenue": "Existing-debt-to-revenue", "has_collateral": "Collateral",
-    "annual_revenue": "Annual revenue", "total_liabilities": "Total liabilities",
-    "loan_amount": "Loan amount", "monthly_repayment": "Monthly repayment",
+    "dscr": "Debt service coverage (DSCR)",
+    "interest_coverage": "Interest coverage",
+    "leverage": "Leverage (liabilities/assets)",
+    "years_trading": "Years trading",
+    "net_profit": "Net profit",
+    "ebitda": "EBITDA",
+    "loan_to_revenue": "Loan-to-revenue",
+    "debt_to_revenue": "Existing-debt-to-revenue",
+    "has_collateral": "Collateral",
+    "annual_revenue": "Annual revenue",
+    "total_liabilities": "Total liabilities",
+    "loan_amount": "Loan amount",
+    "monthly_repayment": "Monthly repayment",
 }
 
 
 @lru_cache(maxsize=1)
 def _load():
     import joblib
+
     return joblib.load(ARTIFACT)
 
 
@@ -65,15 +82,16 @@ def _reason_codes(bundle: dict, df: pd.DataFrame, top: int = 5) -> list[dict]:
     x = x.toarray() if hasattr(x, "toarray") else np.asarray(x)
     names = list(pre.get_feature_names_out())
 
-    if hasattr(clf, "coef_"):                      # linear scorecard
+    if hasattr(clf, "coef_"):  # linear scorecard
         contrib = clf.coef_[0] * x[0]
-    else:                                          # tree model
+    else:  # tree model
         try:
             import shap
+
             sv = shap.TreeExplainer(clf).shap_values(x)
             sv = sv[1] if isinstance(sv, list) else sv
             contrib = np.asarray(sv)[0]
-        except Exception:                          # noqa: BLE001
+        except Exception:
             imp = getattr(clf, "feature_importances_", np.zeros(len(names)))
             contrib = imp * np.sign(x[0])
 
@@ -83,9 +101,11 @@ def _reason_codes(bundle: dict, df: pd.DataFrame, top: int = 5) -> list[dict]:
         raw = names[i].split("__")[-1]
         base = raw.split("_")[0] if raw not in _PRETTY else raw
         label = _PRETTY.get(raw) or _PRETTY.get(base) or raw.replace("_", " ").title()
-        out.append({
-            "feature": label,
-            "direction": "increases_risk" if contrib[i] > 0 else "reduces_risk",
-            "weight": round(float(abs(contrib[i])), 4),
-        })
+        out.append(
+            {
+                "feature": label,
+                "direction": "increases_risk" if contrib[i] > 0 else "reduces_risk",
+                "weight": round(float(abs(contrib[i])), 4),
+            }
+        )
     return out

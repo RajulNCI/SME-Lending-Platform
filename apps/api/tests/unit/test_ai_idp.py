@@ -1,12 +1,20 @@
 """Unit tests — IDP field extractor (Engine 1)."""
+
 from pathlib import Path
 
 from app.services.ai.idp.decode import parse_money
-from app.services.ai.idp.extractor import (extract_application_fields,
-                                           extract_document, tokenize)
+from app.services.ai.idp.extractor import (
+    extract_application_fields,
+    extract_document,
+    tokenize,
+)
 
-SAMPLE_DOCX = (Path(__file__).resolve().parents[2] / "scripts" / "sample_docs"
-               / "finpal_sme_docx_03.docx")
+SAMPLE_DOCX = (
+    Path(__file__).resolve().parents[2]
+    / "scripts"
+    / "sample_docs"
+    / "finpal_sme_docx_03.docx"
+)
 
 
 def test_tokenize_keeps_money_whole():

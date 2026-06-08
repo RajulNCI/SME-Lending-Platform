@@ -1,4 +1,5 @@
 """Unit tests — model governance / drift (REG-004)."""
+
 import numpy as np
 
 from app.services.ai.governance import band, feature_drift, psi, score_drift
@@ -33,6 +34,7 @@ def test_score_drift_alert_on_shift():
 
 def test_feature_drift_reports_worst():
     import pandas as pd
+
     ref = pd.DataFrame({"x": np.random.RandomState(3).normal(0, 1, 2000)})
     new = pd.DataFrame({"x": np.random.RandomState(4).normal(3, 1, 2000)})
     out = feature_drift(ref, new, ["x"])

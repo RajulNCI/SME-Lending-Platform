@@ -6,6 +6,7 @@ Run from apps/api after creating your .env:
 
 Prints the server version, current database, and table count. The password is masked.
 """
+
 import asyncio
 import os
 import sys
@@ -13,11 +14,11 @@ from urllib.parse import urlsplit, urlunsplit
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy import text  # noqa: E402
+from sqlalchemy import text
 
-import app.models  # noqa: E402,F401  (registers all tables on Base.metadata)
-from app.core.config import settings  # noqa: E402
-from app.core.database import make_engine  # noqa: E402
+import app.models  # noqa: F401  (registers all tables on Base.metadata)
+from app.core.config import settings
+from app.core.database import make_engine
 
 
 def _mask(url: str) -> str:
@@ -48,7 +49,7 @@ async def main() -> int:
         print(f"  database    : {db_name}")
         print(f"  public tables: {tables}")
         return 0
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print("Connection FAILED")
         print(f"  {type(exc).__name__}: {exc}")
         return 1

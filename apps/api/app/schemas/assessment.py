@@ -1,10 +1,11 @@
 """Schemas for the AI credit assessment (Engine 2 output)."""
+
 from pydantic import BaseModel
 
 
 class ReasonCode(BaseModel):
     feature: str
-    direction: str          # increases_risk | reduces_risk
+    direction: str  # increases_risk | reduces_risk
     weight: float
 
 

@@ -1,17 +1,38 @@
 """Unit tests — AI credit-decisioning engine (Engine 2)."""
+
 from app.services.ai import credit_metrics as cm
 from app.services.ai.assessment_service import assess
 from app.services.ai.feature_builder import MODEL_COLUMNS, build_features
 from app.services.ai.pd_scorer import grade_for, score
 
-STRONG = {"sector": "Logistics", "years_trading": "12", "annual_revenue": 2_400_000,
-          "net_profit": 240_000, "total_assets": 1_800_000, "total_liabilities": 500_000,
-          "existing_debt": 200_000, "monthly_repayment": 3_000, "loan_amount": 120_000,
-          "loan_term_months": 60, "loan_purpose": "Working Capital", "has_collateral": True}
-WEAK = {"sector": "Hospitality", "years_trading": "2", "annual_revenue": 300_000,
-        "net_profit": 5_000, "total_assets": 200_000, "total_liabilities": 190_000,
-        "existing_debt": 150_000, "monthly_repayment": 0, "loan_amount": 130_000,
-        "loan_term_months": 36, "loan_purpose": "Refinancing", "has_collateral": False}
+STRONG = {
+    "sector": "Logistics",
+    "years_trading": "12",
+    "annual_revenue": 2_400_000,
+    "net_profit": 240_000,
+    "total_assets": 1_800_000,
+    "total_liabilities": 500_000,
+    "existing_debt": 200_000,
+    "monthly_repayment": 3_000,
+    "loan_amount": 120_000,
+    "loan_term_months": 60,
+    "loan_purpose": "Working Capital",
+    "has_collateral": True,
+}
+WEAK = {
+    "sector": "Hospitality",
+    "years_trading": "2",
+    "annual_revenue": 300_000,
+    "net_profit": 5_000,
+    "total_assets": 200_000,
+    "total_liabilities": 190_000,
+    "existing_debt": 150_000,
+    "monthly_repayment": 0,
+    "loan_amount": 130_000,
+    "loan_term_months": 36,
+    "loan_purpose": "Refinancing",
+    "has_collateral": False,
+}
 
 
 # ---- credit_metrics (deterministic formulas) ----
@@ -72,9 +93,22 @@ def test_score_outputs():
 # ---- assessment orchestrator ----
 def test_assess_returns_all_fields():
     r = assess(STRONG)
-    for k in ("pd", "risk_grade", "ai_score", "dscr", "apr", "affordability", "lgd", "ead",
-              "ecl_12m", "ifrs9_stage", "shap_codes", "narrative", "recommendation",
-              "model_version"):
+    for k in (
+        "pd",
+        "risk_grade",
+        "ai_score",
+        "dscr",
+        "apr",
+        "affordability",
+        "lgd",
+        "ead",
+        "ecl_12m",
+        "ifrs9_stage",
+        "shap_codes",
+        "narrative",
+        "recommendation",
+        "model_version",
+    ):
         assert k in r
 
 

@@ -5,7 +5,9 @@ Pure / import-light (pandas + numpy only) so it is unit-testable without the DB 
 Computes the derived ratios the model was trained on (DSCR, leverage, coverage, etc.) and
 estimates EBITDA when it has not been extracted from documents yet.
 """
+
 from __future__ import annotations
+
 import re
 from typing import Any
 
@@ -14,10 +16,25 @@ import pandas as pd
 
 # columns the PD model expects (order-independent; matched by name)
 MODEL_COLUMNS = [
-    "sector", "region", "loan_purpose", "annual_revenue", "ebitda", "net_profit",
-    "total_assets", "total_liabilities", "existing_debt", "years_trading", "has_collateral",
-    "loan_amount", "loan_term_months", "monthly_repayment", "dscr", "interest_coverage",
-    "leverage", "loan_to_revenue", "debt_to_revenue",
+    "sector",
+    "region",
+    "loan_purpose",
+    "annual_revenue",
+    "ebitda",
+    "net_profit",
+    "total_assets",
+    "total_liabilities",
+    "existing_debt",
+    "years_trading",
+    "has_collateral",
+    "loan_amount",
+    "loan_term_months",
+    "monthly_repayment",
+    "dscr",
+    "interest_coverage",
+    "leverage",
+    "loan_to_revenue",
+    "debt_to_revenue",
 ]
 
 
@@ -67,20 +84,31 @@ def build_features(app: dict) -> tuple[pd.DataFrame, dict]:
         "sector": app.get("sector") or "Wholesale",
         "region": app.get("region") or "Rest of Ireland",
         "loan_purpose": app.get("loan_purpose") or "Working Capital",
-        "annual_revenue": revenue, "ebitda": ebitda, "net_profit": net_profit,
-        "total_assets": total_assets, "total_liabilities": total_liabilities,
-        "existing_debt": existing_debt, "years_trading": _years(app.get("years_trading")),
+        "annual_revenue": revenue,
+        "ebitda": ebitda,
+        "net_profit": net_profit,
+        "total_assets": total_assets,
+        "total_liabilities": total_liabilities,
+        "existing_debt": existing_debt,
+        "years_trading": _years(app.get("years_trading")),
         "has_collateral": int(bool(app.get("has_collateral"))),
-        "loan_amount": loan_amount, "loan_term_months": term,
+        "loan_amount": loan_amount,
+        "loan_term_months": term,
         "monthly_repayment": round(monthly_repayment, 2),
-        "dscr": round(dscr, 3), "interest_coverage": round(interest_coverage, 3),
-        "leverage": round(leverage, 3), "loan_to_revenue": round(loan_to_revenue, 4),
+        "dscr": round(dscr, 3),
+        "interest_coverage": round(interest_coverage, 3),
+        "leverage": round(leverage, 3),
+        "loan_to_revenue": round(loan_to_revenue, 4),
         "debt_to_revenue": round(debt_to_revenue, 4),
     }
     derived = {
-        "ebitda": ebitda, "annual_debt_service": annual_debt_service, "dscr": dscr,
-        "monthly_repayment": monthly_repayment, "loan_amount": loan_amount,
-        "existing_debt": existing_debt, "revenue": revenue,
+        "ebitda": ebitda,
+        "annual_debt_service": annual_debt_service,
+        "dscr": dscr,
+        "monthly_repayment": monthly_repayment,
+        "loan_amount": loan_amount,
+        "existing_debt": existing_debt,
+        "revenue": revenue,
     }
     df = pd.DataFrame([row])[MODEL_COLUMNS]
     df = df.replace([np.inf, -np.inf], 0.0)

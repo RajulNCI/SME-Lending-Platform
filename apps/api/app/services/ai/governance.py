@@ -4,12 +4,13 @@ governance — runtime model monitoring (EU AI Act REG-004 / MRM).
 Population Stability Index (PSI) for drift detection on model scores and input features, with
 the standard banding used by the platform:
     PSI < 0.10  -> stable
-    0.10–0.25   -> warning  (investigate; trigger challenger evaluation)
+    0.10-0.25   -> warning  (investigate; trigger challenger evaluation)
     >= 0.25     -> alert    (significant shift; candidate for retrain / rollback)
 
 These are the thresholds wired into the MRM dashboard (PRD REG-004: PSI >= 0.10 triggers a
 challenger evaluation within <= 5 business days).
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -42,10 +43,14 @@ def score_drift(reference_scores, new_scores) -> dict:
     v = round(psi(reference_scores, new_scores), 4)
     status = band(v)
     return {
-        "metric": "score_psi", "psi": v, "status": status,
-        "action": {"stable": "none",
-                   "warning": "evaluate challenger within 5 business days",
-                   "alert": "retrain / recalibrate / consider rollback"}[status],
+        "metric": "score_psi",
+        "psi": v,
+        "status": status,
+        "action": {
+            "stable": "none",
+            "warning": "evaluate challenger within 5 business days",
+            "alert": "retrain / recalibrate / consider rollback",
+        }[status],
     }
 
 

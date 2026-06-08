@@ -4,7 +4,9 @@ extractor — the FinPal field-extraction model at inference time.
 Loads the trained CRF, tokenizes document text the same way the corpus was tokenized, predicts
 BIO tags, and decodes them into structured fields. Maps to the FinPal application schema.
 """
+
 from __future__ import annotations
+
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -22,18 +24,30 @@ _TOKEN_RE = re.compile(r"€?\d[\d,]*(?:\.\d+)?m?|EUR|[A-Za-z0-9.+@'_-]+|[^\s\w]
 
 # extractor tag -> FinPal application field
 TAG_TO_FIELD = {
-    "COMPANY": "company_name", "CRN": "crn", "SECTOR": "sector",
-    "DIRECTOR": "director_name", "EMAIL": "director_email", "PHONE": "director_phone",
-    "EIRCODE": "eircode", "YEARS": "years_trading", "REVENUE": "annual_revenue",
-    "EBITDA": "ebitda", "NETPROFIT": "net_profit", "ASSETS": "total_assets",
-    "LIABILITIES": "total_liabilities", "DEBT": "existing_debt", "LOANAMT": "loan_amount",
-    "PURPOSE": "loan_purpose", "TERM": "loan_term_months",
+    "COMPANY": "company_name",
+    "CRN": "crn",
+    "SECTOR": "sector",
+    "DIRECTOR": "director_name",
+    "EMAIL": "director_email",
+    "PHONE": "director_phone",
+    "EIRCODE": "eircode",
+    "YEARS": "years_trading",
+    "REVENUE": "annual_revenue",
+    "EBITDA": "ebitda",
+    "NETPROFIT": "net_profit",
+    "ASSETS": "total_assets",
+    "LIABILITIES": "total_liabilities",
+    "DEBT": "existing_debt",
+    "LOANAMT": "loan_amount",
+    "PURPOSE": "loan_purpose",
+    "TERM": "loan_term_months",
 }
 
 
 @lru_cache(maxsize=1)
 def _crf():
     import joblib
+
     return joblib.load(ARTIFACT)["crf"]
 
 

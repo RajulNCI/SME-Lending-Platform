@@ -1,15 +1,23 @@
 """features — token features for the CRF field extractor (shared by train + serve)."""
+
 from __future__ import annotations
 
 
 def word_feats(tokens, i):
     w = tokens[i]
     f = {
-        "bias": 1.0, "w.lower": w.lower(),
+        "bias": 1.0,
+        "w.lower": w.lower(),
         "w.isdigit": w.replace(",", "").replace(".", "").isdigit(),
-        "w.istitle": w.istitle(), "w.isupper": w.isupper(), "len": len(w),
-        "has_euro": ("€" in w) or (w.upper() == "EUR"), "has_comma": "," in w,
-        "has_at": "@" in w, "has_plus": "+" in w, "suf3": w[-3:], "pre3": w[:3],
+        "w.istitle": w.istitle(),
+        "w.isupper": w.isupper(),
+        "len": len(w),
+        "has_euro": ("€" in w) or (w.upper() == "EUR"),
+        "has_comma": "," in w,
+        "has_at": "@" in w,
+        "has_plus": "+" in w,
+        "suf3": w[-3:],
+        "pre3": w[:3],
         "has_digit": any(c.isdigit() for c in w),
     }
     if i > 0:

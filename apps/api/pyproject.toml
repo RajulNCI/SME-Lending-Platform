@@ -56,8 +56,25 @@ ocr = [
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+
+[tool.ruff.lint]
 select = ["E","F","W","I","N","UP","S","B","A","C4","PT","RUF"]
-ignore = ["S101","S105","S106"]
+# UP042: the codebase uses the (str, Enum) idiom throughout (ApplicationStatus, UserRole, ...)
+ignore = ["S101","S105","S106","UP042"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency-injection callables are safe in argument defaults
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path",
+  "fastapi.Body", "fastapi.Header", "fastapi.Form",
+  "app.core.security.require_roles", "app.core.security.get_current_user"]
+
+[tool.ruff.lint.per-file-ignores]
+# ML modules: long descriptive comments + intentional best-effort doc parsing
+"app/services/ai/**" = ["E501", "S110"]
+"app/services/queue.py" = ["E501"]
+# dev/demo scripts are not shipped library code
+"scripts/**" = ["E501", "S110", "N806", "C408"]
+"tests/**" = ["E501", "PT018"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -66,6 +83,19 @@ quote-style = "double"
 python_version = "3.12"
 strict = true
 ignore_missing_imports = true
+# the app is a PEP 420 namespace package (no __init__.py) — needed for `mypy app/` to resolve
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+# ML/AI code relies on untyped libs (scikit-learn, pandas, sklearn-crfsuite) — relax strict here
+module = ["app.services.ai.*", "app.services.queue"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_any_generics = false
+warn_return_any = false
+check_untyped_defs = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
