@@ -47,6 +47,22 @@ doesn't meet (`disallow_any_generics`, `disallow_untyped_defs`). Team decision �
 the AI part. (This branch added `namespace_packages`/`explicit_package_bases` so `mypy app/` resolves
 the PEP 420 layout at all, and ML-specific overrides for `app.services.ai.*`.)
 
+## Storage / database — integration boundary
+
+**The AI subsystem is storage-agnostic.** The AI services take and return plain dicts/JSON and do
+**not** depend on any database:
+- `extract_document(file) → fields`, `assess(dict) → dict`, and the `/extract` / `/assess`
+  endpoints return JSON regardless of the store.
+
+So the database choice is the **backend's** decision, not the AI's:
+- **Nathan's dev/demo** runs on **Neon** (managed Postgres) — that's where this branch was built
+  and tested end-to-end.
+- **The integrated platform** uses **DynamoDB** — the backend calls the AI (HTTP or function),
+  gets JSON back, and persists it in DynamoDB. **No AI code changes** are needed for this.
+- The SQLAlchemy models + worker persistence here are a **reference implementation** of the full
+  flow on Neon; the platform can either reuse them (porting persistence) or just call the AI
+  services from its own DynamoDB worker. The integration contract is the JSON, not the schema.
+
 ## Outstanding
 - 🔴 Reset the Neon DB password and update `.env` (a dev password was used during testing).
 - Add an `ebitda` column to `applications` if you want extracted EBITDA persisted (currently it
