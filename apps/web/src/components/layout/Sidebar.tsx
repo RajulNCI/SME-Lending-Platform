@@ -156,8 +156,8 @@ type NavSection = {
   items: { icon: string; text: string; to: string; badge?: boolean; end?: boolean }[];
 };
 
-const NAV: Record<UserRole, NavSection[]> = {
-  credit_officer: [
+const NAV: Record<string, NavSection[]> = {
+  CREDIT_OFFICER: [
     {
       label: 'Platform',
       items: [
@@ -168,7 +168,18 @@ const NAV: Record<UserRole, NavSection[]> = {
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
-  risk_manager: [
+  SENIOR_CREDIT_OFFICER: [
+    {
+      label: 'Platform',
+      items: [
+        { icon: '↑', text: 'Intake Pipeline', to: '/intake' },
+        { icon: '☰', text: 'Queue', to: '/queue', badge: true },
+        { icon: '◧', text: 'Audit Trail', to: '/audit' },
+      ],
+    },
+    { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
+  ],
+  RISK_ANALYST: [
     {
       label: 'Platform',
       items: [
@@ -179,7 +190,7 @@ const NAV: Record<UserRole, NavSection[]> = {
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
-  compliance_officer: [
+  COMPLIANCE_OFFICER: [
     {
       label: 'Platform',
       items: [
@@ -189,7 +200,7 @@ const NAV: Record<UserRole, NavSection[]> = {
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
-  ops_manager: [
+  BRANCH_MANAGER: [
     {
       label: 'Operations',
       items: [
@@ -199,38 +210,28 @@ const NAV: Record<UserRole, NavSection[]> = {
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
-  it_admin: [
+  ADMIN: [
     {
       label: 'Administration',
       items: [
         { icon: '⊛', text: 'User management', to: '/admin/users' },
         { icon: '⊗', text: 'DORA resilience', to: '/admin/dora' },
+        { icon: '☰', text: 'Queue', to: '/queue', badge: true },
+        { icon: '◧', text: 'Audit Trail', to: '/audit' },
       ],
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
-  mrm_analyst: [
+  AUDITOR: [
     {
-      label: 'Model Risk',
+      label: 'Platform',
       items: [
-        { icon: '◉', text: 'Model inventory', to: '/mrm', end: true },
-        { icon: '▦', text: 'PSI / Gini', to: '/mrm/metrics' },
-        { icon: '⚑', text: 'Drift alerts', to: '/mrm/drift' },
+        { icon: '◧', text: 'Audit Trail', to: '/audit' },
       ],
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
-  collections_officer: [
-    {
-      label: 'Operations',
-      items: [
-        { icon: '↺', text: 'Collections', to: '/collections' },
-        { icon: '✉', text: 'Bureau reporting', to: '/bureau' },
-      ],
-    },
-    { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
-  ],
-  borrower_sme: [
+  BORROWER: [
     {
       label: 'My Applications',
       items: [
@@ -250,11 +251,12 @@ const Sidebar: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    const rolesWithQueue: UserRole[] = [
-      'credit_officer',
-      'compliance_officer',
-      'ops_manager',
-      'it_admin',
+    const rolesWithQueue = [
+      'CREDIT_OFFICER',
+      'SENIOR_CREDIT_OFFICER',
+      'COMPLIANCE_OFFICER',
+      'BRANCH_MANAGER',
+      'ADMIN',
     ];
     if (!rolesWithQueue.includes(user.role)) return;
     const load = async () => {

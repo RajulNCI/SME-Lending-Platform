@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_HOME } from '../../types/auth';
+import type { UserRole } from '../../types/auth';
 
 import {
   Page,
@@ -46,16 +46,16 @@ import {
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{username?:string;password?:string}>({});
+  const [fieldErrors, setFieldErrors] = useState<{email?:string;password?:string}>({});
 
   const validate = () => {
-    const e: {username?:string;password?:string} = {};
-    if (!username.trim()) e.username = 'Username is required';
+    const e: {email?:string;password?:string} = {};
+    if (!email.trim()) e.email = 'Email is required';
     if (!password) e.password = 'Password is required';
     setFieldErrors(e);
     return Object.keys(e).length === 0;
@@ -66,23 +66,23 @@ const LoginPage: React.FC = () => {
     setError('');
     if (!validate()) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
-    const ok = login(username.trim(), password);
+    const ok = await login(email.trim(), password);
     setLoading(false);
-    if (!ok) { setError('Invalid username or password.'); return; }
-    const user = JSON.parse(sessionStorage.getItem('finpal_user') || '{}');
-    navigate(ROLE_HOME[user.role as keyof typeof ROLE_HOME] || '/dashboard');
+    if (!ok) { setError('Invalid email or password.'); return; }
+
+    // Read the stored user to get their role for redirect
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('finpal_auth') || '{}');
+      const role = stored.user?.role as UserRole;
+      navigate(ROLE_HOME[role] || '/dashboard');
+    } catch {
+      navigate('/dashboard');
+    }
   };
 
   const hints = [
-    { user: 'credit.officer',      role: 'Credit Officer' },
-    { user: 'risk.manager',        role: 'Risk Manager' },
-    { user: 'compliance.officer',  role: 'Compliance Officer' },
-    { user: 'ops.manager',         role: 'Ops Manager' },
-    { user: 'it.admin',            role: 'IT Admin' },
-    { user: 'mrm.analyst',         role: 'MRM Analyst' },
-    { user: 'collections.officer', role: 'Collections Officer' },
-    { user: 'borrower.sme',        role: 'Borrower (SME)' },
+    { user: 'john@company.com / Test1234!', role: 'Borrower' },
+    { user: 'co@finpal.ie / Test1234!', role: 'Credit Officer' },
   ];
 
   return (
@@ -124,11 +124,11 @@ const LoginPage: React.FC = () => {
 
             <form onSubmit={handleSubmit} noValidate>
               <Field>
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" type="text" placeholder="e.g. credit.officer"
-                  value={username} onChange={e=>{setUsername(e.target.value);setFieldErrors(p=>({...p,username:''}));}}
-                  $error={!!fieldErrors.username} autoComplete="username" />
-                {fieldErrors.username && <ErrorMsg>{fieldErrors.username}</ErrorMsg>}
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="e.g. john@company.com"
+                  value={email} onChange={e=>{setEmail(e.target.value);setFieldErrors(p=>({...p,email:''}));}}
+                  $error={!!fieldErrors.email} autoComplete="email" />
+                {fieldErrors.email && <ErrorMsg>{fieldErrors.email}</ErrorMsg>}
               </Field>
               <Field>
                 <Label htmlFor="password">Password</Label>
@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
                 </HintRow>
               ))}
               <HintFooter>
-                Password format: FinPal@XX# — see credentials list
+                Sign up via POST /api/v1/auth/signup or use the credentials above
               </HintFooter>
             </HintBox>
           </FormCard>

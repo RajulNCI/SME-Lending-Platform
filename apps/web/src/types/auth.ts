@@ -1,4 +1,24 @@
+/**
+ * types/auth.ts
+ *
+ * Authentication types aligned with the AWS Cognito backend.
+ * Roles match Cognito user groups exactly.
+ */
+
+// ── Roles — match Cognito groups ─────────────────────────────────────────────
+
 export type UserRole =
+  | 'BORROWER'
+  | 'CREDIT_OFFICER'
+  | 'SENIOR_CREDIT_OFFICER'
+  | 'RISK_ANALYST'
+  | 'COMPLIANCE_OFFICER'
+  | 'BRANCH_MANAGER'
+  | 'ADMIN'
+  | 'AUDITOR';
+
+// Keep the old lowercase roles as aliases for backward compat in guards
+export type LegacyRole =
   | 'credit_officer'
   | 'risk_manager'
   | 'compliance_officer'
@@ -8,91 +28,106 @@ export type UserRole =
   | 'collections_officer'
   | 'borrower_sme';
 
+// Map legacy roles → new Cognito roles (used by RoleGuard)
+export const LEGACY_TO_COGNITO: Record<LegacyRole, UserRole> = {
+  credit_officer: 'CREDIT_OFFICER',
+  risk_manager: 'RISK_ANALYST',
+  compliance_officer: 'COMPLIANCE_OFFICER',
+  ops_manager: 'BRANCH_MANAGER',
+  it_admin: 'ADMIN',
+  mrm_analyst: 'RISK_ANALYST',
+  collections_officer: 'BRANCH_MANAGER',
+  borrower_sme: 'BORROWER',
+};
+
+// ── Auth user — stored in sessionStorage ─────────────────────────────────────
+
 export interface AuthUser {
-  username: string;
+  email: string;
+  username: string; // Cognito sub (UUID)
   role: UserRole;
   displayName: string;
   roleLabel: string;
   badge: string;
 }
 
-export const USERS: Record<string, AuthUser> = {
-  'credit.officer': {
-    username: 'credit.officer',
-    role: 'credit_officer',
-    displayName: 'Jane Smith',
-    roleLabel: 'Credit Officer',
-    badge: 'CO',
-  },
-  'risk.manager': {
-    username: 'risk.manager',
-    role: 'risk_manager',
-    displayName: 'Liam Murphy',
-    roleLabel: 'Risk Manager',
-    badge: 'RM',
-  },
-  'compliance.officer': {
-    username: 'compliance.officer',
-    role: 'compliance_officer',
-    displayName: 'Aoife Kelly',
-    roleLabel: 'Compliance Officer',
-    badge: 'CO',
-  },
-  'ops.manager': {
-    username: 'ops.manager',
-    role: 'ops_manager',
-    displayName: "Sean O'Brien",
-    roleLabel: 'Operations Manager',
-    badge: 'OM',
-  },
-  'it.admin': {
-    username: 'it.admin',
-    role: 'it_admin',
-    displayName: 'Ciara Walsh',
-    roleLabel: 'IT Administrator',
-    badge: 'IT',
-  },
-  'mrm.analyst': {
-    username: 'mrm.analyst',
-    role: 'mrm_analyst',
-    displayName: 'Niall Byrne',
-    roleLabel: 'MRM Analyst',
-    badge: 'MRM',
-  },
-  'collections.officer': {
-    username: 'collections.officer',
-    role: 'collections_officer',
-    displayName: 'Roisin Doyle',
-    roleLabel: 'Collections Officer',
-    badge: 'COL',
-  },
-  'borrower.sme': {
-    username: 'borrower.sme',
-    role: 'borrower_sme',
-    displayName: 'Acme Ltd',
-    roleLabel: 'SME Borrower',
-    badge: 'SME',
-  },
+// ── API request/response shapes ──────────────────────────────────────────────
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  idToken: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  // These may be in the token payload — we decode from JWT
+}
+
+export interface SignupRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  role: UserRole;
+}
+
+export interface SignupResponse {
+  message: string;
+  userId?: string;
+}
+
+// ── Role display labels ──────────────────────────────────────────────────────
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  BORROWER: 'SME Borrower',
+  CREDIT_OFFICER: 'Credit Officer',
+  SENIOR_CREDIT_OFFICER: 'Senior Credit Officer',
+  RISK_ANALYST: 'Risk Analyst',
+  COMPLIANCE_OFFICER: 'Compliance Officer',
+  BRANCH_MANAGER: 'Branch Manager',
+  ADMIN: 'Administrator',
+  AUDITOR: 'Auditor',
 };
 
-export const PASSWORDS: Record<string, string> = {
-  'credit.officer': 'FinPal@CO1',
-  'risk.manager': 'FinPal@RM2',
-  'compliance.officer': 'FinPal@CMP3',
-  'ops.manager': 'FinPal@OPS4',
-  'it.admin': 'FinPal@ITA5',
-  'mrm.analyst': 'FinPal@MRM6',
-  'collections.officer': 'FinPal@COL7',
-  'borrower.sme': 'FinPal@SME8',
+export const ROLE_BADGES: Record<UserRole, string> = {
+  BORROWER: 'SME',
+  CREDIT_OFFICER: 'CO',
+  SENIOR_CREDIT_OFFICER: 'SCO',
+  RISK_ANALYST: 'RA',
+  COMPLIANCE_OFFICER: 'CMP',
+  BRANCH_MANAGER: 'BM',
+  ADMIN: 'ADM',
+  AUDITOR: 'AUD',
 };
+
+// ── Route mapping per role ───────────────────────────────────────────────────
 
 export const ROLE_HOME: Record<UserRole, string> = {
-  credit_officer: '/queue',
-  risk_manager: '/risk',
-  compliance_officer: '/audit',
-  ops_manager: '/dashboard',
-  it_admin: '/admin/users',
-  mrm_analyst: '/mrm',
-  collections_officer: '/collections',
-  borrower_sme: '/borrower', // Borrower → their own portal
+  BORROWER: '/borrower',
+  CREDIT_OFFICER: '/queue',
+  SENIOR_CREDIT_OFFICER: '/queue',
+  RISK_ANALYST: '/risk',
+  COMPLIANCE_OFFICER: '/audit',
+  BRANCH_MANAGER: '/dashboard',
+  ADMIN: '/admin/users',
+  AUDITOR: '/audit',
 };
+
+// ── JWT decoding helper (no validation — that's the server's job) ────────────
+
+export function decodeJwt(token: string): Record<string, any> {
+  try {
+    const base64 = token.split('.')[1];
+    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch {
+    return {};
+  }
+}
+
+// ── Legacy constants (kept for backward compat with demo hints) ──────────────
+
+export const USERS: Record<string, AuthUser> = {};
+export const PASSWORDS: Record<string, string> = {};
