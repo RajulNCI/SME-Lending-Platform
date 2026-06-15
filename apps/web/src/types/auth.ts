@@ -1,24 +1,13 @@
 /**
  * types/auth.ts
  *
- * Authentication types aligned with the AWS Cognito backend.
- * Roles match Cognito user groups exactly.
+ * Authentication types for demo mode.
+ * Roles use lowercase snake_case to match Nathan's backend user groups.
  */
 
-// ── Roles — match Cognito groups ─────────────────────────────────────────────
+// ── Roles ────────────────────────────────────────────────────────────────────
 
 export type UserRole =
-  | 'BORROWER'
-  | 'CREDIT_OFFICER'
-  | 'SENIOR_CREDIT_OFFICER'
-  | 'RISK_ANALYST'
-  | 'COMPLIANCE_OFFICER'
-  | 'BRANCH_MANAGER'
-  | 'ADMIN'
-  | 'AUDITOR';
-
-// Keep the old lowercase roles as aliases for backward compat in guards
-export type LegacyRole =
   | 'credit_officer'
   | 'risk_manager'
   | 'compliance_officer'
@@ -28,106 +17,121 @@ export type LegacyRole =
   | 'collections_officer'
   | 'borrower_sme';
 
-// Map legacy roles → new Cognito roles (used by RoleGuard)
-export const LEGACY_TO_COGNITO: Record<LegacyRole, UserRole> = {
-  credit_officer: 'CREDIT_OFFICER',
-  risk_manager: 'RISK_ANALYST',
-  compliance_officer: 'COMPLIANCE_OFFICER',
-  ops_manager: 'BRANCH_MANAGER',
-  it_admin: 'ADMIN',
-  mrm_analyst: 'RISK_ANALYST',
-  collections_officer: 'BRANCH_MANAGER',
-  borrower_sme: 'BORROWER',
-};
-
 // ── Auth user — stored in sessionStorage ─────────────────────────────────────
 
 export interface AuthUser {
-  email: string;
-  username: string; // Cognito sub (UUID)
+  username: string;
   role: UserRole;
   displayName: string;
   roleLabel: string;
   badge: string;
 }
 
-// ── API request/response shapes ──────────────────────────────────────────────
+// ── Demo users ───────────────────────────────────────────────────────────────
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+export const USERS: Record<string, AuthUser> = {
+  'credit.officer': {
+    username: 'credit.officer',
+    role: 'credit_officer',
+    displayName: 'Jane Smith',
+    roleLabel: 'Credit Officer',
+    badge: 'CO',
+  },
+  'risk.manager': {
+    username: 'risk.manager',
+    role: 'risk_manager',
+    displayName: 'Liam Murphy',
+    roleLabel: 'Risk Manager',
+    badge: 'RM',
+  },
+  'compliance.officer': {
+    username: 'compliance.officer',
+    role: 'compliance_officer',
+    displayName: 'Aoife Kelly',
+    roleLabel: 'Compliance Officer',
+    badge: 'CO',
+  },
+  'ops.manager': {
+    username: 'ops.manager',
+    role: 'ops_manager',
+    displayName: "Sean O'Brien",
+    roleLabel: 'Operations Manager',
+    badge: 'OM',
+  },
+  'it.admin': {
+    username: 'it.admin',
+    role: 'it_admin',
+    displayName: 'Ciara Walsh',
+    roleLabel: 'IT Administrator',
+    badge: 'IT',
+  },
+  'mrm.analyst': {
+    username: 'mrm.analyst',
+    role: 'mrm_analyst',
+    displayName: 'Niall Byrne',
+    roleLabel: 'MRM Analyst',
+    badge: 'MRM',
+  },
+  'collections.officer': {
+    username: 'collections.officer',
+    role: 'collections_officer',
+    displayName: 'Roisin Doyle',
+    roleLabel: 'Collections Officer',
+    badge: 'COL',
+  },
+  'borrower.sme': {
+    username: 'borrower.sme',
+    role: 'borrower_sme',
+    displayName: 'Acme Ltd',
+    roleLabel: 'SME Borrower',
+    badge: 'SME',
+  },
+};
 
-export interface LoginResponse {
-  idToken: string;
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  // These may be in the token payload — we decode from JWT
-}
+export const PASSWORDS: Record<string, string> = {
+  'credit.officer': 'FinPal@CO1',
+  'risk.manager': 'FinPal@RM2',
+  'compliance.officer': 'FinPal@CMP3',
+  'ops.manager': 'FinPal@OPS4',
+  'it.admin': 'FinPal@ITA5',
+  'mrm.analyst': 'FinPal@MRM6',
+  'collections.officer': 'FinPal@COL7',
+  'borrower.sme': 'FinPal@SME8',
+};
 
-export interface SignupRequest {
-  email: string;
-  password: string;
-  fullName: string;
-  role: UserRole;
-}
-
-export interface SignupResponse {
-  message: string;
-  userId?: string;
-}
-
-// ── Role display labels ──────────────────────────────────────────────────────
+// ── Role display helpers ─────────────────────────────────────────────────────
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  BORROWER: 'SME Borrower',
-  CREDIT_OFFICER: 'Credit Officer',
-  SENIOR_CREDIT_OFFICER: 'Senior Credit Officer',
-  RISK_ANALYST: 'Risk Analyst',
-  COMPLIANCE_OFFICER: 'Compliance Officer',
-  BRANCH_MANAGER: 'Branch Manager',
-  ADMIN: 'Administrator',
-  AUDITOR: 'Auditor',
+  credit_officer: 'Credit Officer',
+  risk_manager: 'Risk Manager',
+  compliance_officer: 'Compliance Officer',
+  ops_manager: 'Operations Manager',
+  it_admin: 'IT Administrator',
+  mrm_analyst: 'MRM Analyst',
+  collections_officer: 'Collections Officer',
+  borrower_sme: 'SME Borrower',
 };
 
 export const ROLE_BADGES: Record<UserRole, string> = {
-  BORROWER: 'SME',
-  CREDIT_OFFICER: 'CO',
-  SENIOR_CREDIT_OFFICER: 'SCO',
-  RISK_ANALYST: 'RA',
-  COMPLIANCE_OFFICER: 'CMP',
-  BRANCH_MANAGER: 'BM',
-  ADMIN: 'ADM',
-  AUDITOR: 'AUD',
+  credit_officer: 'CO',
+  risk_manager: 'RM',
+  compliance_officer: 'CMP',
+  ops_manager: 'OM',
+  it_admin: 'ADM',
+  mrm_analyst: 'MRM',
+  collections_officer: 'COL',
+  borrower_sme: 'SME',
 };
 
 // ── Route mapping per role ───────────────────────────────────────────────────
 
 export const ROLE_HOME: Record<UserRole, string> = {
-  BORROWER: '/borrower',
-  CREDIT_OFFICER: '/queue',
-  SENIOR_CREDIT_OFFICER: '/queue',
-  RISK_ANALYST: '/risk',
-  COMPLIANCE_OFFICER: '/audit',
-  BRANCH_MANAGER: '/dashboard',
-  ADMIN: '/admin/users',
-  AUDITOR: '/audit',
+  credit_officer: '/queue',
+  risk_manager: '/risk',
+  compliance_officer: '/audit',
+  ops_manager: '/dashboard',
+  it_admin: '/admin/users',
+  mrm_analyst: '/mrm',
+  collections_officer: '/collections',
+  borrower_sme: '/borrower',
 };
-
-// ── JWT decoding helper (no validation — that's the server's job) ────────────
-
-export function decodeJwt(token: string): Record<string, any> {
-  try {
-    const base64 = token.split('.')[1];
-    const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(json);
-  } catch {
-    return {};
-  }
-}
-
-// ── Legacy constants (kept for backward compat with demo hints) ──────────────
-
-export const USERS: Record<string, AuthUser> = {};
-export const PASSWORDS: Record<string, string> = {};

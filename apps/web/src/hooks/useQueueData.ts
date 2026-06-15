@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getQueue, submitDecision, getAssessment, type QueueApplicationSummary } from '../services/AIApi';
+import { getQueue, submitDecision, type QueueApplicationSummary } from '../services/AIApi';
 
 export function useQueueData() {
   const [apps, setApps] = useState<QueueApplicationSummary[]>([]);
@@ -9,32 +9,9 @@ export function useQueueData() {
     setLoading(true);
     try {
       const data = await getQueue();
-      
-      // For each app in the queue, try to fetch its assessment data
-      const enriched = await Promise.all(
-        data.map(async (app) => {
-          // If assessment data isn't already embedded, fetch it
-          if (!app.assessment && app.applicationId) {
-            try {
-              const assessment = await getAssessment(app.applicationId);
-              return {
-                ...app,
-                assessment,
-                riskGrade: assessment.riskGrade || app.riskGrade,
-                pd: assessment.pd || app.pd,
-                dscr: assessment.dscr || app.dscr,
-                recommendation: assessment.recommendedStatus || app.recommendation,
-              };
-            } catch {
-              // Assessment not ready yet — that's fine
-              return app;
-            }
-          }
-          return app;
-        })
-      );
-      
-      setApps(enriched);
+      // Nathan's queue response already includes assessment data
+      // No need for separate enrichment calls
+      setApps(data);
     } catch (err) {
       console.error('Failed to fetch queue', err);
     } finally {
@@ -55,8 +32,9 @@ export function useQueueData() {
     try {
       await submitDecision({
         applicationId,
-        decision: decision.toUpperCase() as 'APPROVED' | 'REFERRED' | 'DECLINED',
-        notes: rationale,
+        decision: decision as any,
+        rationale,
+        officerName: _officerName,
       });
       await fetchQueue(); // Refresh queue after decision
       return true;

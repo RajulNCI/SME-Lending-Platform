@@ -27,12 +27,12 @@ const BorrowerApplyPage: React.FC = () => {
 
   // Map purpose selection → backend loanType enum
   const PURPOSE_TO_LOAN_TYPE: Record<string, string> = {
-    'Working Capital': 'WORKING_CAPITAL',
-    'Equipment': 'EQUIPMENT_FINANCE',
-    'Expansion': 'EXPANSION',
-    'Real Estate': 'COMMERCIAL_MORTGAGE',
-    'Refinance': 'REFINANCE',
-    'Other': 'OTHER',
+    'Working Capital': 'Working Capital',
+    'Equipment': 'Equipment Purchase',
+    'Expansion': 'Expansion',
+    'Real Estate': 'Commercial Mortgage',
+    'Refinance': 'Refinance',
+    'Other': 'Other',
   };
 
   const handleSubmit = async () => {
@@ -40,19 +40,14 @@ const BorrowerApplyPage: React.FC = () => {
     setSubmitError(null);
     
     try {
-      // Collect the actual files from the upload hook
-      const files = uploadHook.files.map(uf => uf.file);
-
       const appData = await createApplication({
-        companyName: user?.displayName || 'Borrower SME Ltd',
+        company_name: user?.displayName || 'Borrower SME Ltd',
         sector: 'Technology', // Default sector — could add a form field
-        loanAmount: parseFloat(amount) || 50000,
-        loanType: PURPOSE_TO_LOAN_TYPE[purpose] || 'WORKING_CAPITAL',
-        requestedBy: user?.email || '',
-        files: files.length > 0 ? files : undefined,
+        loan_amount: parseFloat(amount) || 50000,
+        loan_purpose: PURPOSE_TO_LOAN_TYPE[purpose] || 'Working Capital',
       });
       
-      const id = appData.id || appData.applicationId || '';
+      const id = appData.id || appData.applicationId || appData.reference || '';
       setAppId(id);
       
       // Start polling passing the ID explicitly

@@ -45,8 +45,8 @@ const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 /**
- * RoleGuard — accepts both Cognito roles (CREDIT_OFFICER) and legacy roles (credit_officer).
- * Maps legacy roles to Cognito roles for comparison.
+ * RoleGuard — checks if the current user's role is in the allowed list.
+ * Uses case-insensitive comparison to handle both formats.
  */
 const RoleGuard: React.FC<{ children: React.ReactNode; roles: (UserRole | string)[] }> = ({
   children,
@@ -61,25 +61,21 @@ const RoleGuard: React.FC<{ children: React.ReactNode; roles: (UserRole | string
       />
     );
 
-  // Normalize: accept both CREDIT_OFFICER and credit_officer formats
-  const normalizedRoles = roles.map((r) => r.toUpperCase().replace(/\./g, '_'));
-  const userRole = user.role.toUpperCase();
+  // Normalize to lowercase for comparison
+  const normalizedRoles = roles.map((r) => r.toLowerCase());
+  const userRole = user.role.toLowerCase();
 
   if (!normalizedRoles.includes(userRole)) {
-    // Also check if the role grants access via broader permissions
-    // ADMIN has access everywhere, SENIOR_CREDIT_OFFICER has CREDIT_OFFICER access
-    const expandedRoles = new Set(normalizedRoles);
-    if (expandedRoles.has('CREDIT_OFFICER')) expandedRoles.add('SENIOR_CREDIT_OFFICER');
-    if (expandedRoles.has('BRANCH_MANAGER')) expandedRoles.add('ADMIN');
-
-    if (!expandedRoles.has(userRole) && userRole !== 'ADMIN') {
-      return (
-        <Navigate
-          to={ROLE_HOME[user.role] || '/dashboard'}
-          replace
-        />
-      );
+    // it_admin has access everywhere
+    if (userRole === 'it_admin') {
+      return <>{children}</>;
     }
+    return (
+      <Navigate
+        to={ROLE_HOME[user.role] || '/dashboard'}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;
@@ -117,7 +113,7 @@ const App: React.FC = () => (
           <Route
             path="/intake"
             element={
-              <RoleGuard roles={['CREDIT_OFFICER', 'SENIOR_CREDIT_OFFICER', 'BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['credit_officer', 'ops_manager', 'it_admin']}>
                 <IntakePage />
               </RoleGuard>
             }
@@ -126,7 +122,7 @@ const App: React.FC = () => (
             path="/queue"
             element={
               <RoleGuard
-                roles={['CREDIT_OFFICER', 'SENIOR_CREDIT_OFFICER', 'BRANCH_MANAGER', 'ADMIN', 'COMPLIANCE_OFFICER']}
+                roles={['credit_officer', 'ops_manager', 'it_admin', 'compliance_officer']}
               >
                 <QueuePage />
               </RoleGuard>
@@ -137,7 +133,7 @@ const App: React.FC = () => (
           <Route
             path="/audit"
             element={
-              <RoleGuard roles={['COMPLIANCE_OFFICER', 'ADMIN', 'AUDITOR', 'CREDIT_OFFICER']}>
+              <RoleGuard roles={['compliance_officer', 'it_admin', 'credit_officer']}>
                 <AuditPage />
               </RoleGuard>
             }
@@ -145,7 +141,7 @@ const App: React.FC = () => (
           <Route
             path="/ccr"
             element={
-              <RoleGuard roles={['COMPLIANCE_OFFICER', 'ADMIN']}>
+              <RoleGuard roles={['compliance_officer', 'it_admin']}>
                 <Soon title="CCR / AnaCredit" />
               </RoleGuard>
             }
@@ -153,7 +149,7 @@ const App: React.FC = () => (
           <Route
             path="/gdpr"
             element={
-              <RoleGuard roles={['COMPLIANCE_OFFICER', 'ADMIN']}>
+              <RoleGuard roles={['compliance_officer', 'it_admin']}>
                 <Soon title="GDPR Requests" />
               </RoleGuard>
             }
@@ -163,7 +159,7 @@ const App: React.FC = () => (
           <Route
             path="/dashboard"
             element={
-              <RoleGuard roles={['BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['ops_manager', 'it_admin']}>
                 <DashboardPage />
               </RoleGuard>
             }
@@ -171,7 +167,7 @@ const App: React.FC = () => (
           <Route
             path="/payments"
             element={
-              <RoleGuard roles={['BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['ops_manager', 'it_admin']}>
                 <Soon title="SEPA Payments" />
               </RoleGuard>
             }
@@ -179,7 +175,7 @@ const App: React.FC = () => (
           <Route
             path="/mandates"
             element={
-              <RoleGuard roles={['BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['ops_manager', 'collections_officer', 'it_admin']}>
                 <Soon title="SDD Mandates" />
               </RoleGuard>
             }
@@ -187,7 +183,7 @@ const App: React.FC = () => (
           <Route
             path="/sla"
             element={
-              <RoleGuard roles={['BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['ops_manager', 'it_admin']}>
                 <Soon title="SLA Monitor" />
               </RoleGuard>
             }
@@ -197,7 +193,7 @@ const App: React.FC = () => (
           <Route
             path="/risk"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
                 <RiskPage />
               </RoleGuard>
             }
@@ -205,7 +201,7 @@ const App: React.FC = () => (
           <Route
             path="/risk/models"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
                 <RiskPage />
               </RoleGuard>
             }
@@ -213,7 +209,7 @@ const App: React.FC = () => (
           <Route
             path="/risk/stress"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
                 <RiskPage />
               </RoleGuard>
             }
@@ -221,7 +217,7 @@ const App: React.FC = () => (
           <Route
             path="/risk/ewi"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['risk_manager', 'it_admin']}>
                 <Soon title="Early Warning Indicators" />
               </RoleGuard>
             }
@@ -231,7 +227,7 @@ const App: React.FC = () => (
           <Route
             path="/mrm"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
                 <MrmPage />
               </RoleGuard>
             }
@@ -239,7 +235,7 @@ const App: React.FC = () => (
           <Route
             path="/mrm/metrics"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
                 <MrmPage />
               </RoleGuard>
             }
@@ -247,7 +243,7 @@ const App: React.FC = () => (
           <Route
             path="/mrm/drift"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
                 <MrmPage />
               </RoleGuard>
             }
@@ -255,7 +251,7 @@ const App: React.FC = () => (
           <Route
             path="/mrm/challenger"
             element={
-              <RoleGuard roles={['RISK_ANALYST', 'ADMIN']}>
+              <RoleGuard roles={['mrm_analyst', 'risk_manager', 'it_admin']}>
                 <Soon title="Champion-Challenger" />
               </RoleGuard>
             }
@@ -265,7 +261,7 @@ const App: React.FC = () => (
           <Route
             path="/collections"
             element={
-              <RoleGuard roles={['BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['collections_officer', 'ops_manager', 'it_admin']}>
                 <CollectionsPage />
               </RoleGuard>
             }
@@ -273,7 +269,7 @@ const App: React.FC = () => (
           <Route
             path="/bureau"
             element={
-              <RoleGuard roles={['BRANCH_MANAGER', 'ADMIN']}>
+              <RoleGuard roles={['collections_officer', 'ops_manager', 'it_admin']}>
                 <Soon title="Credit Bureau Reporting" />
               </RoleGuard>
             }
@@ -283,7 +279,7 @@ const App: React.FC = () => (
           <Route
             path="/admin/users"
             element={
-              <RoleGuard roles={['ADMIN']}>
+              <RoleGuard roles={['it_admin']}>
                 <AdminUsersPage />
               </RoleGuard>
             }
@@ -291,7 +287,7 @@ const App: React.FC = () => (
           <Route
             path="/admin/dora"
             element={
-              <RoleGuard roles={['ADMIN']}>
+              <RoleGuard roles={['it_admin']}>
                 <Soon title="DORA Resilience" />
               </RoleGuard>
             }
@@ -299,7 +295,7 @@ const App: React.FC = () => (
           <Route
             path="/admin/api"
             element={
-              <RoleGuard roles={['ADMIN']}>
+              <RoleGuard roles={['it_admin']}>
                 <Soon title="API Management" />
               </RoleGuard>
             }
@@ -307,7 +303,7 @@ const App: React.FC = () => (
           <Route
             path="/admin/tprm"
             element={
-              <RoleGuard roles={['ADMIN']}>
+              <RoleGuard roles={['it_admin']}>
                 <Soon title="TPRM Register" />
               </RoleGuard>
             }
@@ -317,7 +313,7 @@ const App: React.FC = () => (
           <Route
             path="/borrower"
             element={
-              <RoleGuard roles={['BORROWER']}>
+              <RoleGuard roles={['borrower_sme']}>
                 <BorrowerPage />
               </RoleGuard>
             }
@@ -325,7 +321,7 @@ const App: React.FC = () => (
           <Route
             path="/borrower/apply"
             element={
-              <RoleGuard roles={['BORROWER']}>
+              <RoleGuard roles={['borrower_sme']}>
                 <BorrowerApplyPage />
               </RoleGuard>
             }
@@ -333,7 +329,7 @@ const App: React.FC = () => (
           <Route
             path="/borrower/messages"
             element={
-              <RoleGuard roles={['BORROWER']}>
+              <RoleGuard roles={['borrower_sme']}>
                 <Soon title="Messages" />
               </RoleGuard>
             }

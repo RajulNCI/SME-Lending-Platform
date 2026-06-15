@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROLE_HOME } from '../../types/auth';
+import { ROLE_HOME, USERS, PASSWORDS } from '../../types/auth';
 import type { UserRole } from '../../types/auth';
 
 import {
@@ -46,16 +46,16 @@ import {
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{email?:string;password?:string}>({});
+  const [fieldErrors, setFieldErrors] = useState<{username?:string;password?:string}>({});
 
   const validate = () => {
-    const e: {email?:string;password?:string} = {};
-    if (!email.trim()) e.email = 'Email is required';
+    const e: {username?:string;password?:string} = {};
+    if (!username.trim()) e.username = 'Username is required';
     if (!password) e.password = 'Password is required';
     setFieldErrors(e);
     return Object.keys(e).length === 0;
@@ -66,9 +66,9 @@ const LoginPage: React.FC = () => {
     setError('');
     if (!validate()) return;
     setLoading(true);
-    const ok = await login(email.trim(), password);
+    const ok = await login(username.trim(), password);
     setLoading(false);
-    if (!ok) { setError('Invalid email or password.'); return; }
+    if (!ok) { setError('Invalid username or password.'); return; }
 
     // Read the stored user to get their role for redirect
     try {
@@ -80,10 +80,11 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const hints = [
-    { user: 'john@company.com / Test1234!', role: 'Borrower' },
-    { user: 'co@finpal.ie / Test1234!', role: 'Credit Officer' },
-  ];
+  // Build demo hints from the actual USERS/PASSWORDS data
+  const hints = Object.keys(USERS).slice(0, 4).map(u => ({
+    user: `${u} / ${PASSWORDS[u]}`,
+    role: USERS[u].roleLabel,
+  }));
 
   return (
     <Page>
@@ -124,11 +125,11 @@ const LoginPage: React.FC = () => {
 
             <form onSubmit={handleSubmit} noValidate>
               <Field>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="e.g. john@company.com"
-                  value={email} onChange={e=>{setEmail(e.target.value);setFieldErrors(p=>({...p,email:''}));}}
-                  $error={!!fieldErrors.email} autoComplete="email" />
-                {fieldErrors.email && <ErrorMsg>{fieldErrors.email}</ErrorMsg>}
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" type="text" placeholder="e.g. credit.officer"
+                  value={username} onChange={e=>{setUsername(e.target.value);setFieldErrors(p=>({...p,username:''}));}}
+                  $error={!!fieldErrors.username} autoComplete="username" />
+                {fieldErrors.username && <ErrorMsg>{fieldErrors.username}</ErrorMsg>}
               </Field>
               <Field>
                 <Label htmlFor="password">Password</Label>
@@ -157,7 +158,7 @@ const LoginPage: React.FC = () => {
                 </HintRow>
               ))}
               <HintFooter>
-                Sign up via POST /api/v1/auth/signup or use the credentials above
+                Use any of the 8 demo accounts above to explore different role views
               </HintFooter>
             </HintBox>
           </FormCard>
