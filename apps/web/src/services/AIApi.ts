@@ -1,194 +1,331 @@
 /**
- * services/nathanApi.ts
+ * services/AIApi.ts
  *
- * The ONLY file that talks to Nathan's Python backend.
- * All components import from here — never from mockPythonApi directly.
+ * The ONLY file that talks to the backend API.
+ * All components import from here — never from apiClient directly.
  *
- * ─── TO SWITCH FROM MOCK TO REAL API ────────────────────────────────────────
- * 1. Set USE_REAL_API = true
- * 2. Set PYTHON_API_BASE_URL to Nathan's endpoint
- * 3. Done — nothing else changes
- * ────────────────────────────────────────────────────────────────────────────
+ * Connected to: https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev
+ * Proxied via Vite dev server at /api/*
  */
 
-import {
-  mockSubmitApplication,
-  mockGetStatus,
-  mockAdvanceStep,
-  mockGetQueue,
-  mockSubmitDecision,
-  mockGetBorrowerApplications,
-  mockGetProgress,
-  mockCreateApplication,
-  type SubmitApplicationResponse,
-  type ApplicationStatusResponse,
-  type QueueApplicationSummary,
-  type SubmitDecisionRequest,
-  type SubmitDecisionResponse,
-  type BorrowerApplication,
-  type ProgressOut
-} from './mockPythonApi';
+import { apiGet, apiPost, apiPostForm } from './apiClient';
 
-// ── Config — change these when Nathan's API is ready ─────────────────────────
-const USE_REAL_API = false;
-const PYTHON_API_BASE_URL = 'http://localhost:8000'; // Nathan's FastAPI endpoint
+// ── Types ────────────────────────────────────────────────────────────────────
 
-// ── Real API calls (filled in when Nathan is ready) ──────────────────────────
-
-async function realSubmitApplication(
-  applicationId: string,
-  documents: { name: string; size: number; type: string }[]
-): Promise<SubmitApplicationResponse> {
-  const form = new FormData();
-  form.append('application_id', applicationId);
-  form.append('documents_meta', JSON.stringify(documents));
-  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications/submit`, {
-    method: 'POST',
-    body: form,
-  });
-  if (!res.ok) throw new Error(`Submit failed: ${res.statusText}`);
-  return res.json();
+export interface SubmitApplicationResponse {
+  id: string;
+  applicationId?: string;
+  status: string;
+  createdAt?: string;
+  message?: string;
 }
 
-async function realGetStatus(applicationId: string): Promise<ApplicationStatusResponse> {
-  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications/${applicationId}/status`);
-  if (!res.ok) throw new Error(`Status fetch failed: ${res.statusText}`);
-  return res.json();
+export interface ApplicationStatusResponse {
+  id: string;
+  applicationId?: string;
+  status: string;
+  companyName?: string;
+  sector?: string;
+  loanAmount?: number;
+  loanType?: string;
+  assessment?: any;
+  decision?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-async function realGetQueue(): Promise<QueueApplicationSummary[]> {
-  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/queue`);
-  if (!res.ok) throw new Error(`Queue fetch failed: ${res.statusText}`);
-  return res.json();
+export interface QueueApplicationSummary {
+  id: string;
+  applicationId: string;
+  company: string;
+  companyName?: string;
+  sector: string;
+  loanType: string;
+  amount: string;
+  requestedAmount: number;
+  loanAmount?: number;
+  status: string;
+  hitl: boolean;
+  hitlReason?: string;
+  riskGrade: string | null;
+  pd: number | null;
+  dscr: number | null;
+  recommendation: string | null;
+  recommendedStatus?: string;
+  createdAt: string;
+  decidedAt: string | null;
+  officerDecision: 'approved' | 'referred' | 'declined' | null;
+  // Assessment fields from rules engine
+  assessment?: any;
 }
 
-async function realSubmitDecision(req: SubmitDecisionRequest): Promise<SubmitDecisionResponse> {
-  const res = await fetch(
-    `${PYTHON_API_BASE_URL}/api/v1/applications/${req.applicationId}/decision`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
-    }
-  );
-  if (!res.ok) throw new Error(`Decision submit failed: ${res.statusText}`);
-  return res.json();
+export interface SubmitDecisionRequest {
+  applicationId: string;
+  decision: 'APPROVED' | 'REFERRED' | 'DECLINED';
+  notes: string;
 }
 
-// ── Public API — these are the functions all components use ──────────────────
-
-// ── New API calls for Borrower Flow ──────────────────────────────────────────
-
-async function realCreateApplication(data: any) {
-  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer dummy-token'
-    },
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error(`Submit failed: ${res.statusText}`);
-  return res.json();
+export interface SubmitDecisionResponse {
+  success: boolean;
+  applicationId: string;
+  decision: string;
+  message?: string;
 }
 
-async function realGetProgress(applicationId: string): Promise<ProgressOut> {
-  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications/${applicationId}/progress`, {
-    headers: { 'Authorization': 'Bearer dummy-token' }
-  });
-  if (!res.ok) throw new Error(`Progress fetch failed: ${res.statusText}`);
-  return res.json();
+export interface BorrowerApplication {
+  id: string;
+  reference: string;
+  company_name: string;
+  companyName?: string;
+  loan_amount: number;
+  loanAmount?: number;
+  loan_purpose: string;
+  loanType?: string;
+  status: string;
+  created_at: string;
+  createdAt?: string;
 }
 
-async function realGetBorrowerApplications(): Promise<BorrowerApplication[]> {
-  const res = await fetch(`${PYTHON_API_BASE_URL}/api/v1/applications`, {
-    headers: { 'Authorization': 'Bearer dummy-token' }
-  });
-  if (!res.ok) throw new Error(`Applications fetch failed: ${res.statusText}`);
-  return res.json();
+export interface ProgressOut {
+  step: number;
+  total_steps: number;
+  completed: boolean;
+  decision?: string | null;
 }
 
-export async function createApplication(data: any) {
-  return USE_REAL_API ? realCreateApplication(data) : mockCreateApplication(data);
+export interface AssessmentData {
+  revenue?: number;
+  revenueActual?: number;
+  cashflow?: number;
+  dscr?: number;
+  pd?: number;
+  lgd?: number;
+  ead?: number;
+  riskGrade?: string;
+  apr?: number;
+  eclStage?: number;
+  ecl12m?: number;
+  eclLifetime?: number;
+  discrepancy?: boolean;
+  discrepancyDetail?: string;
+  recommendedStatus?: string;
+  fairnessMetrics?: { disparateImpact: number; equalOpportunity: number };
+  shapValues?: Array<{ feature: string; value: number; direction: string }>;
+  [key: string]: any;
 }
 
-export async function getProgress(applicationId: string): Promise<ProgressOut> {
-  return USE_REAL_API ? realGetProgress(applicationId) : mockGetProgress(applicationId);
-}
-
-export async function getBorrowerApplications(): Promise<BorrowerApplication[]> {
-  return USE_REAL_API ? realGetBorrowerApplications() : mockGetBorrowerApplications();
-}
-
-export type { BorrowerApplication, ProgressOut };
-
-// --- LEGACY STUBS FOR UNUSED PAGES TO PASS TSC ---
-export interface UploadResponse { id: string; borrower: string; sector: string; requestedAmount: number; revenue: number; ebitda: number; dscr: number; accountingPeriod: string; documentType: string; }
-export interface AuditEntry { id: string; timestamp: string; user: string; action: string; details: any; applicationId?: string; eventType?: string; description?: string; actor?: string; }
-export const uploadApplication = async (id: string, file: File): Promise<UploadResponse> => ({ id, borrower: '', sector: '', requestedAmount: 0, revenue: 0, ebitda: 0, dscr: 0, accountingPeriod: '', documentType: '' });
-export const analyzeApplication = async (data: any): Promise<any> => ({});
-export const generateApplicationId = () => `FP-${Date.now()}`;
-export const getDecisions = async (): Promise<any[]> => [];
-export const getAuditTrail = async (): Promise<AuditEntry[]> => [];
-export const getReport = async (appId?: string): Promise<any> => ({});
-
-
+// ── Application Submission (Borrower) ────────────────────────────────────────
 
 /**
- * Called when borrower submits documents.
- * Creates the application record in Nathan's backend.
+ * Submit a loan application with file uploads.
+ * Uses multipart/form-data to match the backend's expected format.
  */
+export async function createApplication(data: {
+  companyName: string;
+  sector: string;
+  loanAmount: number;
+  loanType: string;
+  requestedBy?: string;
+  files?: File[];
+}): Promise<SubmitApplicationResponse> {
+  const form = new FormData();
+  form.append('companyName', data.companyName);
+  form.append('sector', data.sector);
+  form.append('loanAmount', String(data.loanAmount));
+  form.append('loanType', data.loanType);
+
+  if (data.requestedBy) {
+    form.append('requestedBy', data.requestedBy);
+  }
+
+  // Attach files
+  if (data.files) {
+    for (const file of data.files) {
+      form.append('files', file);
+    }
+  }
+
+  return apiPostForm<SubmitApplicationResponse>('/api/v1/applications/submit', form);
+}
+
+// ── Application List (Borrower + Officer) ────────────────────────────────────
+
+export async function getBorrowerApplications(): Promise<BorrowerApplication[]> {
+  const data = await apiGet<any[]>('/api/v1/applications');
+  // Normalize response shape
+  return data.map((app) => ({
+    id: app.id || app.applicationId,
+    reference: app.reference || app.id || app.applicationId,
+    company_name: app.companyName || app.company_name || 'Unknown',
+    companyName: app.companyName || app.company_name,
+    loan_amount: app.loanAmount || app.loan_amount || 0,
+    loanAmount: app.loanAmount || app.loan_amount || 0,
+    loan_purpose: app.loanType || app.loan_purpose || 'N/A',
+    loanType: app.loanType || app.loan_purpose,
+    status: app.status || 'SUBMITTED',
+    created_at: app.createdAt || app.created_at || new Date().toISOString(),
+    createdAt: app.createdAt || app.created_at,
+  }));
+}
+
+// ── Single Application Detail ────────────────────────────────────────────────
+
+export async function getApplicationDetail(id: string): Promise<ApplicationStatusResponse> {
+  return apiGet<ApplicationStatusResponse>(`/api/v1/applications/${id}`);
+}
+
+// ── Application Assessment (Rules Engine Output) ─────────────────────────────
+
+export async function getAssessment(id: string): Promise<AssessmentData> {
+  return apiGet<AssessmentData>(`/api/v1/applications/${id}/assessment`);
+}
+
+// ── Application Progress (for polling) ───────────────────────────────────────
+
+/**
+ * Derive progress from the application status.
+ * The backend doesn't have a dedicated /progress endpoint — we infer from status.
+ */
+export async function getProgress(applicationId: string): Promise<ProgressOut> {
+  try {
+    const app = await apiGet<any>(`/api/v1/applications/${applicationId}`);
+    const status = (app.status || '').toUpperCase();
+
+    // Map status → pipeline step
+    const STATUS_TO_STEP: Record<string, number> = {
+      SUBMITTED: 1,
+      PROCESSING: 3,
+      WAITING_OFFICER: 4,
+      APPROVED: 6,
+      DECLINED: 6,
+      REFERRED: 6,
+      FAILED: 6,
+    };
+
+    const step = STATUS_TO_STEP[status] ?? 0;
+    const completed = ['APPROVED', 'DECLINED', 'REFERRED', 'FAILED'].includes(status);
+    const decision = completed ? status.toLowerCase() : null;
+
+    return { step, total_steps: 6, completed, decision };
+  } catch {
+    return { step: 0, total_steps: 6, completed: false };
+  }
+}
+
+// ── Queue (Credit Officer) ───────────────────────────────────────────────────
+
+export async function getQueue(): Promise<QueueApplicationSummary[]> {
+  const data = await apiGet<any[]>('/api/v1/applications/queue');
+  return data.map((app) => ({
+    id: app.id || app.applicationId,
+    applicationId: app.id || app.applicationId,
+    company: app.companyName || app.company || 'Unknown',
+    companyName: app.companyName || app.company,
+    sector: app.sector || 'N/A',
+    loanType: app.loanType || app.loan_type || 'N/A',
+    amount: `€${(app.loanAmount || app.requestedAmount || 0).toLocaleString()}`,
+    requestedAmount: app.loanAmount || app.requestedAmount || 0,
+    loanAmount: app.loanAmount || app.requestedAmount || 0,
+    status: app.status || 'WAITING_OFFICER',
+    hitl: app.status === 'WAITING_OFFICER',
+    hitlReason: app.status === 'WAITING_OFFICER' ? 'Awaiting officer review' : undefined,
+    riskGrade: app.assessment?.riskGrade || app.riskGrade || null,
+    pd: app.assessment?.pd || app.pd || null,
+    dscr: app.assessment?.dscr || app.dscr || null,
+    recommendation: app.assessment?.recommendedStatus || app.recommendation || null,
+    recommendedStatus: app.assessment?.recommendedStatus || null,
+    createdAt: app.createdAt || app.created_at || '',
+    decidedAt: app.decidedAt || null,
+    officerDecision: app.officerDecision || null,
+    assessment: app.assessment || null,
+  }));
+}
+
+// ── Submit Decision (Credit Officer) ─────────────────────────────────────────
+
+export async function submitDecision(req: SubmitDecisionRequest): Promise<SubmitDecisionResponse> {
+  const res = await apiPost<any>(`/api/v1/applications/${req.applicationId}/decision`, {
+    decision: req.decision,
+    notes: req.notes,
+  });
+  return {
+    success: true,
+    applicationId: req.applicationId,
+    decision: req.decision,
+    message: res.message || 'Decision submitted',
+  };
+}
+
+// ── Step advance (no-op in real API — backend handles internally) ────────────
+
+export async function advanceStep(_applicationId: string, _step: number): Promise<void> {
+  // No-op — the AWS backend advances steps automatically via its worker
+}
+
+// ── Application status polling helper ────────────────────────────────────────
+
+export async function getApplicationStatus(applicationId: string): Promise<ApplicationStatusResponse> {
+  return getApplicationDetail(applicationId);
+}
+
 export async function submitApplication(
   applicationId: string,
   documents: { name: string; size: number; type: string }[]
 ): Promise<SubmitApplicationResponse> {
-  return USE_REAL_API
-    ? realSubmitApplication(applicationId, documents)
-    : mockSubmitApplication(applicationId, documents);
+  // This is used by the old flow — delegate to createApplication
+  return createApplication({
+    companyName: 'Borrower SME Ltd',
+    sector: 'Unknown',
+    loanAmount: 0,
+    loanType: 'WORKING_CAPITAL',
+  });
 }
 
-/**
- * Poll this every 1s to get current pipeline step status.
- * Returns step array + assessment (once AI completes) + officerDecision.
- */
-export async function getApplicationStatus(
-  applicationId: string
-): Promise<ApplicationStatusResponse> {
-  return USE_REAL_API ? realGetStatus(applicationId) : mockGetStatus(applicationId);
+// ── Legacy stubs (kept so other pages compile) ───────────────────────────────
+
+export interface UploadResponse {
+  id: string;
+  borrower: string;
+  sector: string;
+  requestedAmount: number;
+  revenue: number;
+  ebitda: number;
+  dscr: number;
+  accountingPeriod: string;
+  documentType: string;
+}
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  details: any;
+  applicationId?: string;
+  eventType?: string;
+  description?: string;
+  actor?: string;
 }
 
-/**
- * Called by the borrower pipeline to advance steps in mock mode.
- * Remove this call when real API is used — Nathan's backend advances steps internally.
- */
-export async function advanceStep(applicationId: string, step: number): Promise<void> {
-  if (!USE_REAL_API) {
-    await mockAdvanceStep(applicationId, step);
-  }
-  // No-op in real mode — Nathan's pipeline advances automatically
-}
+export const uploadApplication = async (
+  id: string,
+  _file: File
+): Promise<UploadResponse> => ({
+  id,
+  borrower: '',
+  sector: '',
+  requestedAmount: 0,
+  revenue: 0,
+  ebitda: 0,
+  dscr: 0,
+  accountingPeriod: '',
+  documentType: '',
+});
+export const analyzeApplication = async (_data: any): Promise<any> => ({});
+export const generateApplicationId = () => `FP-${Date.now()}`;
+export const getDecisions = async (): Promise<any[]> => [];
+export const getAuditTrail = async (): Promise<AuditEntry[]> => [];
+export const getReport = async (_appId?: string): Promise<any> => ({});
 
-/**
- * Called by QueuePage to load all applications for the credit officer.
- * Returns live counts — not static mock counts.
- */
-export async function getQueue(): Promise<QueueApplicationSummary[]> {
-  return USE_REAL_API ? realGetQueue() : mockGetQueue();
-}
+// ── Re-export types ──────────────────────────────────────────────────────────
 
-/**
- * Called by DecisionGate when credit officer submits approve/refer/decline.
- * Logs immutably per EU AI Act Art.12.
- */
-export async function submitDecision(req: SubmitDecisionRequest): Promise<SubmitDecisionResponse> {
-  return USE_REAL_API ? realSubmitDecision(req) : mockSubmitDecision(req);
-}
-
-// Re-export types so components only need to import from nathanApi
-export type {
-  SubmitApplicationResponse,
-  ApplicationStatusResponse,
-  QueueApplicationSummary,
-  SubmitDecisionRequest,
-  SubmitDecisionResponse,
-};
+export type { AssessmentData as AIAssessmentData };

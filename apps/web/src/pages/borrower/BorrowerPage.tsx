@@ -94,15 +94,23 @@ const BorrowerPage: React.FC = () => {
                         </Tr>
                     </Thead>
                     <Tbody>
-                        {apps.map(a => (
+                        {apps.map(a => {
+                            const companyName = a.company_name || a.companyName || 'Unknown';
+                            const loanAmount = a.loan_amount || a.loanAmount || 0;
+                            const loanPurpose = a.loan_purpose || a.loanType || 'N/A';
+                            const createdAt = a.created_at || a.createdAt || '';
+                            const status = (a.status || 'SUBMITTED').toLowerCase();
+                            const reference = a.reference || a.id;
+                            return (
                             <Tr key={a.id}>
-                                <Td style={{ fontFamily: 'monospace' }}>{a.reference}</Td>
-                                <Td>€{a.loan_amount.toLocaleString()}</Td>
-                                <Td>{a.loan_purpose}</Td>
-                                <Td><Badge $variant={a.status === 'approved' ? 'success' : a.status === 'declined' ? 'error' : 'warning'}>{a.status}</Badge></Td>
-                                <Td>{new Date(a.created_at).toLocaleDateString()}</Td>
+                                <Td style={{ fontFamily: 'monospace' }}>{reference}</Td>
+                                <Td>€{Number(loanAmount).toLocaleString()}</Td>
+                                <Td>{loanPurpose}</Td>
+                                <Td><Badge $variant={status === 'approved' ? 'success' : status === 'declined' || status === 'failed' ? 'error' : 'warning'}>{a.status}</Badge></Td>
+                                <Td>{createdAt ? new Date(createdAt).toLocaleDateString() : '—'}</Td>
                             </Tr>
-                        ))}
+                            );
+                        })}
                     </Tbody>
                 </Table>
             </TableWrapper>

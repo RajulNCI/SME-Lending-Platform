@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getProgress, advanceStep } from '../services/AIApi';
+import { getProgress } from '../services/AIApi';
 
 export function useApplicationPolling(applicationId: string | null, totalSteps: number) {
   const [currentStep, setCurrentStep] = useState(-1);
@@ -26,14 +26,14 @@ export function useApplicationPolling(applicationId: string | null, totalSteps: 
           setIsComplete(true);
           setDecision(progData.decision || null);
         } else {
-          // If mock mode, manually advance step on the mock backend
-          await advanceStep(idToUse, progData.step + 1);
-          pollTimer.current = setTimeout(poll, 1000);
+          // Poll every 3 seconds (real API, no need to advance steps)
+          pollTimer.current = setTimeout(poll, 3000);
         }
       } catch (err) {
         console.error("Polling error:", err);
         setError("Failed to fetch progress.");
-        // Stop polling on error for now
+        // Retry after a longer delay on error
+        pollTimer.current = setTimeout(poll, 5000);
       }
     };
 
