@@ -13,9 +13,19 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // Nathan's FastAPI backend
+        target: 'https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev',
         changeOrigin: true,
-        secure: false,
+        secure: true,
+      },
+      '/health': {
+        target: 'https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/ai-api': {
+        target: 'https://finpals-prototype.vercel.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ai-api/, ''),
       },
     },
   },

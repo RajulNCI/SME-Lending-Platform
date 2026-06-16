@@ -95,10 +95,10 @@ const BorrowerPage: React.FC = () => {
                     </Thead>
                     <Tbody>
                         {apps.map(a => {
-                            const companyName = a.company_name || 'Unknown';
-                            const loanAmount = a.loan_amount || 0;
-                            const loanPurpose = a.loan_purpose || 'N/A';
-                            const createdAt = a.created_at || '';
+                            const companyName = a.company_name || a.companyName || 'Unknown';
+                            const loanAmount = a.loan_amount || a.loanAmount || 0;
+                            const loanPurpose = a.loan_purpose || a.loanType || 'N/A';
+                            const createdAt = a.created_at || a.createdAt || '';
                             const status = (a.status || 'SUBMITTED').toLowerCase();
                             const reference = a.reference || a.id;
                             return (
