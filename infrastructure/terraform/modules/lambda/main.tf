@@ -60,6 +60,10 @@ resource "aws_ecr_lifecycle_policy" "processing_worker" {
 }
 
 # Lambda function (Docker image)
+# NOTE: Deploy this after pushing the Docker image to ECR:
+#   docker build -f Dockerfile.lambda -t <ecr_url>:latest .
+#   docker push <ecr_url>:latest
+#   terraform apply   (then this resource will succeed)
 resource "aws_lambda_function" "processing_worker" {
   function_name = "${var.project_name}-processing-worker-${var.environment}"
   role          = var.lab_role_arn
