@@ -8,7 +8,21 @@ production. The trained extractor then runs on the resulting text regardless of 
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+
+def normalize_ocr_text(text: str) -> str:
+    """Repair common OCR space-collapsing on image scans.
+
+    OCR engines often drop spaces in label/value lines, e.g.
+    'CompanyName:CorkWholesaleLtd'. Re-insert spaces at lowercase->uppercase
+    boundaries and before colons so the extractor sees the same shape it was
+    trained on. Applied to image OCR only; digital formats keep their layout.
+    """
+    text = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", text)  # CompanyName -> Company Name
+    text = re.sub(r"(?<=[A-Za-z]):", " :", text)  # label: -> label :
+    return text
 
 
 def parse_docx(path) -> str:
@@ -46,12 +60,12 @@ def ocr_image(path, engine=None) -> str:
     """Pretrained-OCR adapter. `engine` is a callable(path)->str (Textract/PaddleOCR/Tesseract).
     Tries rapidocr-onnxruntime if installed and no engine supplied."""
     if engine is not None:
-        return engine(path)
+        return normalize_ocr_text(engine(path))
     try:
         from rapidocr_onnxruntime import RapidOCR
 
         res, _ = RapidOCR()(str(path))
-        return "\n".join(line[1] for line in (res or []))
+        return normalize_ocr_text("\n".join(line[1] for line in (res or [])))
     except Exception as exc:
         raise RuntimeError(
             "No OCR engine available. Pass `engine=` (Textract/PaddleOCR/Tesseract) "
