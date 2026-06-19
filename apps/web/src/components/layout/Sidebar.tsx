@@ -32,13 +32,13 @@ const Logo = styled.div`
 const LogoMark = styled.div`
   width: 36px;
   height: 36px;
-  background: #1d9e75;
+  background: #3b5fc0;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.9375rem;
+  font-weight: 900;
+  font-size: 1.25rem;
   color: #fff;
   flex-shrink: 0;
 `;
@@ -67,7 +67,9 @@ const SectionLabel = styled.p<{ $v: boolean }>`
   opacity: ${({ $v }) => ($v ? 1 : 0)};
   transition: opacity 0.15s;
   white-space: nowrap;
-  ${({ $v }) => !$v && `
+  ${({ $v }) =>
+    !$v &&
+    `
     height: 0;
     margin: 0;
     padding: 0;
@@ -111,7 +113,9 @@ const NavLabel = styled.span<{ $v: boolean }>`
   transition: opacity 0.15s;
   flex: 1;
   white-space: nowrap;
-  ${({ $v }) => !$v && `
+  ${({ $v }) =>
+    !$v &&
+    `
     width: 0;
     flex: none;
     overflow: hidden;
@@ -129,7 +133,9 @@ const NavBadge = styled.span<{ $v: boolean; $n: number }>`
   text-align: center;
   opacity: ${({ $v, $n }) => ($v && $n >= 0 ? 1 : 0)};
   transition: opacity 0.15s;
-  ${({ $v }) => !$v && `
+  ${({ $v }) =>
+    !$v &&
+    `
     display: none;
   `}
 `;
@@ -149,7 +155,6 @@ const CollapseBtn = styled.button<{ $c: boolean }>`
     color: #fff;
   }
 `;
-
 
 type NavSection = {
   label: string;
@@ -225,9 +230,7 @@ const NAV: Record<string, NavSection[]> = {
   AUDITOR: [
     {
       label: 'Platform',
-      items: [
-        { icon: '◧', text: 'Audit Trail', to: '/audit' },
-      ],
+      items: [{ icon: '◧', text: 'Audit Trail', to: '/audit' }],
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
@@ -273,7 +276,6 @@ const Sidebar: React.FC = () => {
   if (!user) return null;
   const sections = NAV[user.role] || [];
 
-
   return (
     <Wrap $c={collapsed}>
       <Logo>
@@ -281,9 +283,9 @@ const Sidebar: React.FC = () => {
         <LogoText $v={!collapsed}>
           <div
             style={{
-              fontFamily: "'Inter',sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontSize: '.9375rem',
-              fontWeight: 700,
+              fontWeight: 900,
               color: '#fff',
             }}
           >
@@ -292,13 +294,13 @@ const Sidebar: React.FC = () => {
           <div
             style={{
               fontSize: '.5625rem',
-              color: '#1D9E75',
+              color: '#fff',
               fontWeight: 600,
               letterSpacing: '.08em',
               textTransform: 'uppercase',
             }}
           >
-            v5.0 · Trustworthy AI
+            Trustworthy AI
           </div>
         </LogoText>
       </Logo>
