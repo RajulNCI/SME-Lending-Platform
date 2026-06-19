@@ -177,7 +177,26 @@ export async function getApplicationDetail(id: string): Promise<ApplicationStatu
 // ── Application Assessment (Rules Engine Output) ─────────────────────────────
 
 export async function getAssessment(id: string): Promise<AssessmentData> {
-  return apiGet<AssessmentData>(`/api/v1/applications/${id}/assessment`);
+  // Local AI pipeline — reads assessment from the FastAPI backend
+  return apiGet<AssessmentData>(`/local-ai/applications/${id}/assessment`);
+}
+
+// ── Trigger local AI pipeline after submission ───────────────────────────────
+
+export async function processApplicationAI(
+  id: string,
+  files?: File[]
+): Promise<{ id: string; status: string; assessment: AssessmentData }> {
+  if (files && files.length > 0) {
+    // Send files as multipart FormData
+    const form = new FormData();
+    for (const file of files) {
+      form.append('files', file);
+    }
+    return apiPostForm(`/local-ai/applications/${id}/process-ai`, form);
+  }
+  // No files — just trigger the pipeline with application data from DB
+  return apiPost(`/local-ai/applications/${id}/process-ai`, { documents: [] });
 }
 
 // ── Application Progress (for polling) ───────────────────────────────────────

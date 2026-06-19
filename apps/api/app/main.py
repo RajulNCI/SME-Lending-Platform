@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+from app.api.v1.endpoints.local_ai import router as local_ai_router
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.database import Base, engine
@@ -81,6 +82,9 @@ add_cors(app)
 
 # Routers
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
+
+# Local AI orchestration routes (mounted at /local-ai, no auth for dev convenience)
+app.include_router(local_ai_router)
 
 
 @app.exception_handler(Exception)

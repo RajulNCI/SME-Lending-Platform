@@ -1,11 +1,11 @@
 /**
  * types/auth.ts
  *
- * Authentication types aligned with the AWS Cognito backend.
- * Roles match Cognito user groups exactly.
+ * Authentication types for LOCAL DEMO MODE.
+ * TODO: Replace with AWS Cognito types for production.
  */
 
-// ── Roles — match Cognito groups ─────────────────────────────────────────────
+// ── Roles ────────────────────────────────────────────────────────────────────
 
 export type UserRole =
   | 'BORROWER'
@@ -28,7 +28,7 @@ export type LegacyRole =
   | 'collections_officer'
   | 'borrower_sme';
 
-// Map legacy roles → new Cognito roles (used by RoleGuard)
+// Map legacy roles → new roles (used by RoleGuard)
 export const LEGACY_TO_COGNITO: Record<LegacyRole, UserRole> = {
   credit_officer: 'CREDIT_OFFICER',
   risk_manager: 'RISK_ANALYST',
@@ -44,7 +44,7 @@ export const LEGACY_TO_COGNITO: Record<LegacyRole, UserRole> = {
 
 export interface AuthUser {
   email: string;
-  username: string; // Cognito sub (UUID)
+  username: string;
   role: UserRole;
   displayName: string;
   roleLabel: string;
@@ -59,11 +59,11 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  idToken: string;
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  // These may be in the token payload — we decode from JWT
+  access_token: string;
+  token_type: string;
+  role: string;
+  display_name: string;
+  expires_in: number;
 }
 
 export interface SignupRequest {
@@ -115,7 +115,7 @@ export const ROLE_HOME: Record<UserRole, string> = {
   AUDITOR: '/audit',
 };
 
-// ── JWT decoding helper (no validation — that's the server's job) ────────────
+// ── JWT decode helper (kept for backward compat, not used in demo mode) ──────
 
 export function decodeJwt(token: string): Record<string, any> {
   try {
@@ -127,7 +127,13 @@ export function decodeJwt(token: string): Record<string, any> {
   }
 }
 
-// ── Legacy constants (kept for backward compat with demo hints) ──────────────
+// ── Demo users (for reference — actual auth is handled by backend) ───────────
 
+export const DEMO_USERS: Record<string, { email: string; password: string; role: string }> = {
+  borrower: { email: 'borrower@company.ie', password: 'demo', role: 'SME Borrower' },
+  officer: { email: 'officer@finpal.ie', password: 'demo', role: 'Credit Officer' },
+};
+
+// Legacy exports (kept for backward compat)
 export const USERS: Record<string, AuthUser> = {};
 export const PASSWORDS: Record<string, string> = {};

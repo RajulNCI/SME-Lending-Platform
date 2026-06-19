@@ -1,18 +1,21 @@
 /**
  * context/AuthContext.tsx
  *
- * Authentication context — calls the real AWS Cognito login endpoint.
- * Stores JWT token + user info in sessionStorage.
+ * Authentication context — LOCAL DEMO MODE.
+ * Calls the local FastAPI /api/v1/auth/login endpoint which returns a simple
+ * demo token + user info (no JWT, no Cognito).
+ *
+ * TODO: Replace with AWS Cognito integration for production.
  */
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { apiFetch, clearAuth } from '../services/apiClient';
-import { decodeJwt, ROLE_LABELS, ROLE_BADGES } from '../types/auth';
-import type { AuthUser, UserRole, LoginResponse, SignupRequest, SignupResponse } from '../types/auth';
+import { ROLE_LABELS, ROLE_BADGES } from '../types/auth';
+import type { AuthUser, UserRole } from '../types/auth';
 
 interface AuthContextType {
   user: AuthUser | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (data: SignupRequest) => Promise<{ ok: boolean; message: string }>;
+  signup: (data: any) => Promise<{ ok: boolean; message: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -24,6 +27,19 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   loading: false,
 });
+
+// ── Role mapping: backend role → frontend role ──────────────────────────────
+
+const BACKEND_TO_FRONTEND_ROLE: Record<string, UserRole> = {
+  borrower_sme: 'BORROWER',
+  credit_officer: 'CREDIT_OFFICER',
+  risk_manager: 'RISK_ANALYST',
+  compliance_officer: 'COMPLIANCE_OFFICER',
+  ops_manager: 'BRANCH_MANAGER',
+  it_admin: 'ADMIN',
+  mrm_analyst: 'RISK_ANALYST',
+  collections_officer: 'BRANCH_MANAGER',
+};
 
 // ── Restore session from storage ─────────────────────────────────────────────
 function restoreUser(): AuthUser | null {
@@ -46,31 +62,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
+      // Call the local demo auth endpoint
       const res = await apiFetch<any>('/api/v1/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username: email, password }),
       });
 
-      // The backend may return tokens in various shapes.
-      // Common patterns: { idToken, accessToken } or { IdToken, AccessToken } or { token }
-      const idToken = res.idToken || res.IdToken || res.id_token || res.token || '';
-      const accessToken = res.accessToken || res.AccessToken || res.access_token || idToken;
-
-      if (!idToken) {
+      // The demo backend returns: { access_token, role, display_name, ... }
+      const token = res.access_token || res.token || '';
+      if (!token) {
         console.error('Login response missing token:', res);
         return false;
       }
 
-      // Decode the JWT to extract user info
-      const payload = decodeJwt(idToken);
-      const groups: string[] = payload['cognito:groups'] || [];
-      const role = (groups[0] || 'BORROWER') as UserRole;
+      // Map backend role (e.g. "borrower_sme") → frontend role (e.g. "BORROWER")
+      const backendRole = res.role || 'borrower_sme';
+      const role = BACKEND_TO_FRONTEND_ROLE[backendRole] || 'BORROWER';
 
       const authUser: AuthUser = {
-        email: payload.email || email,
-        username: payload.sub || payload['cognito:username'] || email,
+        email: email,
+        username: email,
         role,
-        displayName: payload.name || payload.email || email,
+        displayName: res.display_name || email,
         roleLabel: ROLE_LABELS[role] || role,
         badge: ROLE_BADGES[role] || role.slice(0, 2),
       };
@@ -79,9 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.setItem(
         'finpal_auth',
         JSON.stringify({
-          token: idToken,
-          accessToken,
-          refreshToken: res.refreshToken || res.RefreshToken || '',
+          token,
           user: authUser,
         })
       );
@@ -96,20 +107,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // ── Signup ───────────────────────────────────────────────────────────────
-  const signup = useCallback(async (data: SignupRequest): Promise<{ ok: boolean; message: string }> => {
-    setLoading(true);
-    try {
-      const res = await apiFetch<any>('/api/v1/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-      return { ok: true, message: res.message || 'Account created successfully' };
-    } catch (err: any) {
-      return { ok: false, message: err.message || 'Signup failed' };
-    } finally {
-      setLoading(false);
-    }
+  // ── Signup (stub for demo) ──────────────────────────────────────────────
+  const signup = useCallback(async (_data: any): Promise<{ ok: boolean; message: string }> => {
+    return { ok: false, message: 'Signup is disabled in demo mode. Use the demo credentials.' };
   }, []);
 
   // ── Logout ───────────────────────────────────────────────────────────────

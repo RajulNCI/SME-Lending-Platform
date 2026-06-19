@@ -81,8 +81,8 @@ const LoginPage: React.FC = () => {
   };
 
   const hints = [
-    { user: 'john@company.com / Test1234!', role: 'Borrower' },
-    { user: 'co@finpal.ie / Test1234!', role: 'Credit Officer' },
+    { user: 'borrower@company.ie / demo', role: 'SME Borrower' },
+    { user: 'officer@finpal.ie / demo', role: 'Credit Officer' },
   ];
 
   return (
@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
                 </HintRow>
               ))}
               <HintFooter>
-                Sign up via POST /api/v1/auth/signup or use the credentials above
+                Local demo mode — no registration needed. Use credentials above.
               </HintFooter>
             </HintBox>
           </FormCard>

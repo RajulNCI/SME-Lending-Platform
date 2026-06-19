@@ -13,19 +13,16 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
+      },
+      '/local-ai': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
       },
       '/health': {
-        target: 'https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: true,
-      },
-      '/ai-api': {
-        target: 'https://finpals-prototype.vercel.app',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ai-api/, ''),
       },
     },
   },

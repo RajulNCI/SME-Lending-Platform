@@ -1,81 +1,88 @@
 """
-Auth endpoints — login, logout, current user.
-POST /api/v1/auth/login  → returns JWT
-GET  /api/v1/auth/me     → returns current user info
-"""
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import datetime, timezone
+Auth endpoints — LOCAL DEMO MODE (no JWT, no Cognito, no DB lookup).
 
-from app.core.database import get_db
-from app.core.security import verify_password, create_access_token, get_current_user
-from app.core.config import settings
-from app.models.user import User
-from app.schemas.auth import LoginRequest, LoginResponse, UserOut
-from app.services.audit_service import AuditService
+Two hardcoded demo users for the presentation:
+  - borrower@company.ie / demo → SME Borrower
+  - officer@finpal.ie / demo  → Credit Officer
+
+POST /api/v1/auth/login  → returns a simple demo token + user info
+GET  /api/v1/auth/me     → returns current user info from token
+
+TODO: Replace with AWS Cognito integration for production.
+"""
+from fastapi import APIRouter, HTTPException, status
+
+from app.schemas.auth import LoginRequest, LoginResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=LoginResponse, summary="Sign in and receive JWT token")
-async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> LoginResponse:
-    """
-    Authenticate with username + password.
-    Returns a JWT bearer token valid for {JWT_EXPIRE_MINUTES} minutes.
-    Role is embedded in the token for RBAC checks.
-    """
-    result = await db.execute(select(User).where(User.username == body.username))
-    user: User | None = result.scalar_one_or_none()
+# ── Demo users (hardcoded — no DB needed) ─────────────────────────────────────
 
-    if not user or not verify_password(body.password, user.hashed_pw):
+DEMO_USERS = {
+    "borrower@company.ie": {
+        "id": "demo-borrower-001",
+        "username": "borrower@company.ie",
+        "email": "borrower@company.ie",
+        "display_name": "Sarah Mitchell",
+        "role": "borrower_sme",
+        "password": "demo",
+    },
+    "officer@finpal.ie": {
+        "id": "demo-officer-001",
+        "username": "officer@finpal.ie",
+        "email": "officer@finpal.ie",
+        "display_name": "James O'Brien",
+        "role": "credit_officer",
+        "password": "demo",
+    },
+}
+
+# Map demo token → user for the security layer
+DEMO_TOKENS = {
+    "demo-token-borrower": DEMO_USERS["borrower@company.ie"],
+    "demo-token-officer": DEMO_USERS["officer@finpal.ie"],
+}
+
+
+@router.post("/login", response_model=LoginResponse, summary="Demo login (no JWT)")
+async def login(body: LoginRequest) -> LoginResponse:
+    """
+    Local demo login — matches email + password against hardcoded users.
+    Returns a simple demo token (not a JWT). No database required.
+    """
+    # Accept either 'username' field as email
+    email = body.username.strip().lower()
+
+    user = DEMO_USERS.get(email)
+    if not user or body.password != user["password"]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail="Invalid email or password. Use borrower@company.ie / demo or officer@finpal.ie / demo",
         )
 
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is inactive — contact IT Admin",
-        )
-
-    # Update last login
-    user.last_login = datetime.now(timezone.utc)
-    await db.commit()
-
-    token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        extra={"username": user.username, "display_name": user.display_name},
-    )
-
-    # Write to audit log
-    await AuditService.log(
-        db=db,
-        event_type="user.login",
-        actor_id=user.id,
-        actor_username=user.username,
-        description=f"User {user.username} logged in successfully",
-        payload={"role": user.role.value},
-    )
+    # Generate a deterministic demo token based on role
+    token = f"demo-token-{user['role'].split('_')[0]}"
 
     return LoginResponse(
         access_token=token,
         token_type="bearer",
-        role=user.role.value,
-        display_name=user.display_name,
-        expires_in=settings.JWT_EXPIRE_MINUTES * 60,
+        role=user["role"],
+        display_name=user["display_name"],
+        expires_in=86400,  # 24 hours (doesn't actually expire)
     )
 
 
-@router.get("/me", response_model=UserOut, summary="Get current authenticated user")
-async def me(
-    token_data: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> UserOut:
-    result = await db.execute(select(User).where(User.id == token_data["sub"]))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return UserOut.model_validate(user)
+@router.get("/me", summary="Get current demo user")
+async def me():
+    """Returns info about the demo user. In demo mode, returns the borrower by default."""
+    user = DEMO_USERS["borrower@company.ie"]
+    return {
+        "id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "display_name": user["display_name"],
+        "role": user["role"],
+        "is_active": True,
+        "mfa_enabled": False,
+    }
