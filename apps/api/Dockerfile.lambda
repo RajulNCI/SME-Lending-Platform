@@ -1,0 +1,35 @@
+FROM public.ecr.aws/lambda/python:3.12
+
+# System deps for RapidOCR and LightGBM
+RUN dnf install -y libgomp mesa-libGL && dnf clean all
+
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+# Install Python dependencies
+COPY pyproject.toml .
+RUN pip install --no-cache-dir \
+    fastapi \
+    sqlalchemy[asyncio] \
+    asyncpg \
+    boto3 \
+    lightgbm \
+    scikit-learn \
+    scikit-learn-intelex \
+    sklearn-crfsuite \
+    pandas \
+    numpy \
+    shap \
+    pdfplumber \
+    python-docx \
+    openpyxl \
+    rapidocr-onnxruntime \
+    python-jose[cryptography] \
+    passlib[bcrypt] \
+    pydantic-settings \
+    psycopg2-binary
+
+# Copy application code
+COPY app/ ./app/
+
+# Lambda handler
+CMD ["app.services.lambda_handler.handler"]

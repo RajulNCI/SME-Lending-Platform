@@ -1,0 +1,14 @@
+# Terraform state — contains sensitive values (DB passwords, secrets)
+# Use S3 remote backend instead (see README)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform working dirs
+.terraform/
+.terraform.lock.hcl
+
+# Variable files with secrets
+*.tfvars
+*.tfvars.json
+!example.tfvars
