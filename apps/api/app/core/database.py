@@ -1,12 +1,9 @@
 """
-Async SQLAlchemy database session — LOCAL DEMO MODE using SQLite.
+Async SQLAlchemy database session.
 
-Uses aiosqlite for zero-setup local development. The database file is stored
-at apps/api/finpal_demo.db. Tables are auto-created on startup.
-
-TODO: Switch back to PostgreSQL (asyncpg) for production.
+Connects to PostgreSQL (RDS) when DATABASE_URL is set.
+Falls back to SQLite for local development without AWS.
 """
-
 from __future__ import annotations
 
 import os
@@ -25,34 +22,32 @@ from app.core.config import settings
 
 
 def _get_database_url() -> str:
-    """
-    Determine the database URL. If DATABASE_URL env var points to Postgres,
-    fall back to local SQLite for demo mode.
-    """
-    url = settings.DATABASE_URL
+    url = settings.DATABASE_URL or ""
 
-    # If the URL is the default Postgres or Postgres isn't reachable, use SQLite
+    # Use PostgreSQL if a real URL is configured
     if "postgresql" in url or "postgres" in url:
-        db_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        db_path = os.path.join(db_dir, "finpal_demo.db")
-        return f"sqlite+aiosqlite:///{db_path}"
+        # Ensure asyncpg driver is used
+        return url.replace("postgresql://", "postgresql+asyncpg://").replace(
+            "postgres://", "postgresql+asyncpg://"
+        )
 
-    return url
+    # Fallback: local SQLite (dev without AWS)
+    db_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    db_path = os.path.join(db_dir, "finpal_demo.db")
+    return f"sqlite+aiosqlite:///{db_path}"
 
 
 def make_engine(echo: bool | None = None) -> AsyncEngine:
-    """Create a configured async engine."""
     url = _get_database_url()
-
     connect_args: dict[str, Any] = {}
     if "sqlite" in url:
-        # SQLite needs check_same_thread=False for async usage
         connect_args["check_same_thread"] = False
 
     return create_async_engine(
         url,
         echo=settings.DEBUG if echo is None else echo,
         connect_args=connect_args,
+        pool_pre_ping=True,
     )
 
 
@@ -72,7 +67,6 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency — yields an async DB session per request."""
     async with AsyncSessionLocal() as session:
         try:
             yield session

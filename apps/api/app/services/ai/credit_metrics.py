@@ -52,6 +52,13 @@ def ecl_12m(pd_value: float, lgd_value: float, ead_value: float) -> float:
     return round(pd_value * lgd_value * ead_value, 2)
 
 
+def ecl_lifetime(pd_value: float, lgd_value: float, ead_value: float, term_months: int) -> float:
+    """Simplified lifetime ECL — cumulative PD over term, assuming flat hazard rate."""
+    years = term_months / 12
+    cumulative_pd = 1 - (1 - pd_value) ** years
+    return round(cumulative_pd * lgd_value * ead_value, 2)
+
+
 def ifrs9_stage(pd_value: float, dscr: float) -> int:
     """Staging: 1 performing, 2 significant increase in credit risk, 3 credit-impaired."""
     if pd_value >= 0.50 or dscr < 1.0:

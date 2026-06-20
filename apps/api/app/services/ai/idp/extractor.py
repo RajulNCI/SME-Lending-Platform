@@ -15,7 +15,19 @@ from app.services.ai.idp.decode import extract_fields
 from app.services.ai.idp.features import feats
 from app.services.ai.idp.parsers import document_to_text
 
-ARTIFACT = Path(__file__).resolve().parent / "finpal_extractor.joblib"
+_LOCAL_ARTIFACT = Path(__file__).resolve().parent / "finpal_extractor.joblib"
+_S3_KEY = "models/finpal_extractor.joblib"
+
+
+def _artifact_path() -> Path:
+    if _LOCAL_ARTIFACT.exists():
+        return _LOCAL_ARTIFACT
+    import os, tempfile, boto3  # noqa: E401
+    bucket = os.environ.get("S3_MODELS_BUCKET", "creditcore-ai-models-dev")
+    tmp = Path(tempfile.gettempdir()) / "finpal_extractor.joblib"
+    if not tmp.exists():
+        boto3.client("s3").download_file(bucket, _S3_KEY, str(tmp))
+    return tmp
 
 # money tokens (€/EUR + digits, incl. "1.23m") stay whole; emails/phones/words stay whole;
 # punctuation splits off — matching how the training corpus was tokenized.
@@ -48,7 +60,7 @@ TAG_TO_FIELD = {
 def _crf():
     import joblib
 
-    return joblib.load(ARTIFACT)["crf"]
+    return joblib.load(_artifact_path())["crf"]
 
 
 def tokenize(text: str) -> list[str]:

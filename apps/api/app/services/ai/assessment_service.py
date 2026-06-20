@@ -23,9 +23,14 @@ _PERSISTED = (
     "dscr",
     "apr",
     "affordability",
+    "lgd",
+    "ead",
     "ecl_12m",
+    "ecl_lifetime",
     "ifrs9_stage",
     "shap_codes",
+    "narrative",
+    "recommendation",
     "model_version",
 )
 
@@ -56,6 +61,7 @@ def assess(app: dict) -> dict:
         "lgd": lgd,
         "ead": ead,
         "ecl_12m": ecl,
+        "ecl_lifetime": cm.ecl_lifetime(s["pd"], lgd, ead, term),
         "ifrs9_stage": stage,
         "shap_codes": s["shap_codes"],
         "recommendation": rec,

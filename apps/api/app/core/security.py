@@ -1,20 +1,48 @@
 """
-Security — LOCAL DEMO MODE (no JWT validation).
+Security — Cognito JWT validation.
 
-Recognizes demo tokens from the auth endpoint and returns the user payload.
-Also accepts "dummy-token" for backward compat and allows unauthenticated
-requests to pass through with a default borrower identity.
+Validates the Cognito IdToken (Bearer) sent from the frontend.
+Falls back to demo tokens so local development still works without AWS.
 
-TODO: Replace with proper JWT validation (python-jose) for production.
+Cognito JWKS endpoint:
+  https://cognito-idp.<region>.amazonaws.com/<pool_id>/.well-known/jwks.json
+
+The IdToken carries:
+  - sub            → unique Cognito user ID
+  - email          → user email
+  - cognito:groups → list of Cognito group names (e.g. ["CreditOfficer"])
+  - name / given_name / family_name  → display name
+  - custom:company_name → company (for borrowers)
 """
+from __future__ import annotations
+
+import threading
+from functools import lru_cache
 from typing import Any
+
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwk, jwt
+
+from app.core.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
+# ── Cognito group → internal role ────────────────────────────────────────────
 
-# ── Demo token → user mapping ────────────────────────────────────────────────
+_GROUP_TO_ROLE: dict[str, str] = {
+    "Borrower":            "borrower_sme",
+    "CreditOfficer":       "credit_officer",
+    "RiskManager":         "risk_manager",
+    "ComplianceOfficer":   "compliance_officer",
+    "MRMAnalyst":          "mrm_analyst",
+    "OpsManager":          "ops_manager",
+    "CollectionsOfficer":  "collections_officer",
+    "Admin":               "it_admin",
+}
+
+# ── Demo tokens (fallback for local dev without Cognito) ─────────────────────
 
 _DEMO_TOKENS: dict[str, dict[str, Any]] = {
     "demo-token-borrower": {
@@ -35,7 +63,6 @@ _DEMO_TOKENS: dict[str, dict[str, Any]] = {
         "username": "officer@finpal.ie",
         "display_name": "James O'Brien",
     },
-    # Legacy compatibility
     "dummy-token": {
         "sub": "demo-borrower-001",
         "role": "borrower_sme",
@@ -44,7 +71,6 @@ _DEMO_TOKENS: dict[str, dict[str, Any]] = {
     },
 }
 
-# Default user when no token is provided (demo convenience)
 _DEFAULT_USER: dict[str, Any] = {
     "sub": "demo-borrower-001",
     "role": "borrower_sme",
@@ -52,59 +78,168 @@ _DEFAULT_USER: dict[str, Any] = {
     "display_name": "Sarah Mitchell",
 }
 
+# ── JWKS cache (fetched once, refreshed on key miss) ─────────────────────────
 
-# ── Dependencies ──────────────────────────────────────────────────────────────
+_jwks_cache: dict[str, Any] = {}
+_jwks_lock = threading.Lock()
+
+
+def _jwks_url() -> str:
+    region = settings.COGNITO_REGION or "us-east-1"
+    pool_id = settings.COGNITO_USER_POOL_ID or ""
+    return f"https://cognito-idp.{region}.amazonaws.com/{pool_id}/.well-known/jwks.json"
+
+
+def _get_jwks() -> dict[str, Any]:
+    global _jwks_cache
+    with _jwks_lock:
+        if _jwks_cache:
+            return _jwks_cache
+        try:
+            resp = httpx.get(_jwks_url(), timeout=5)
+            resp.raise_for_status()
+            _jwks_cache = resp.json()
+        except Exception:
+            _jwks_cache = {"keys": []}
+        return _jwks_cache
+
+
+def _cognito_available() -> bool:
+    return bool(settings.COGNITO_USER_POOL_ID and settings.COGNITO_CLIENT_ID)
+
+
+def _verify_cognito_token(token: str) -> dict[str, Any] | None:
+    """Validate a Cognito IdToken. Returns claims dict or None on failure."""
+    if not _cognito_available():
+        return None
+    try:
+        jwks = _get_jwks()
+        header = jwt.get_unverified_header(token)
+        kid = header.get("kid")
+
+        # Find matching key
+        key_data = next((k for k in jwks.get("keys", []) if k["kid"] == kid), None)
+        if not key_data:
+            # Refresh JWKS once on key miss
+            global _jwks_cache
+            with _jwks_lock:
+                _jwks_cache = {}
+            jwks = _get_jwks()
+            key_data = next((k for k in jwks.get("keys", []) if k["kid"] == kid), None)
+        if not key_data:
+            return None
+
+        public_key = jwk.construct(key_data)
+        issuer = f"https://cognito-idp.{settings.COGNITO_REGION}.amazonaws.com/{settings.COGNITO_USER_POOL_ID}"
+
+        claims = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=settings.COGNITO_CLIENT_ID,
+            issuer=issuer,
+        )
+        return claims
+    except JWTError:
+        return None
+    except Exception:
+        return None
+
+
+def _claims_to_user(claims: dict[str, Any]) -> dict[str, Any]:
+    """Convert Cognito IdToken claims → internal user dict."""
+    groups: list[str] = claims.get("cognito:groups", [])
+    role = "borrower_sme"
+    for g in groups:
+        if g in _GROUP_TO_ROLE:
+            role = _GROUP_TO_ROLE[g]
+            break
+
+    email = claims.get("email", "")
+    given = claims.get("given_name", "")
+    family = claims.get("family_name", "")
+    display_name = f"{given} {family}".strip() or claims.get("name", "") or email
+
+    return {
+        "sub": claims.get("sub", ""),
+        "role": role,
+        "username": email,
+        "display_name": display_name,
+        "company": claims.get("custom:company_name", ""),
+    }
+
+
+# ── FastAPI dependencies ──────────────────────────────────────────────────────
 
 
 def get_current_user(token: str | None = Depends(oauth2_scheme)) -> dict[str, Any]:
     """
-    FastAPI dependency — returns the demo user payload.
-    In demo mode, any token (or no token) is accepted.
+    Validates the Bearer token:
+    1. Try Cognito JWT validation (production)
+    2. Fall back to demo token lookup (local dev)
+    3. If no token and Cognito is configured → 401
+    4. If no token and no Cognito configured → default demo user
     """
-    if not token:
-        # No token provided — return default demo user
+    if token:
+        # Try Cognito JWT first
+        claims = _verify_cognito_token(token)
+        if claims:
+            return _claims_to_user(claims)
+
+        # Fall back to demo token
+        demo_user = _DEMO_TOKENS.get(token)
+        if demo_user:
+            return demo_user
+
+        # Token provided but invalid
+        if _cognito_available():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         return _DEFAULT_USER
 
-    # Look up the demo token
-    user = _DEMO_TOKENS.get(token)
-    if user:
-        return user
-
-    # Unknown token — still allow through in demo mode with default user
+    # No token
+    if _cognito_available():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return _DEFAULT_USER
 
 
 def require_roles(*roles: str):
-    """
-    Factory that returns a FastAPI dependency enforcing role membership.
-    In demo mode, this is lenient — it checks the role but doesn't block hard.
-    """
+    """Dependency factory that enforces role membership."""
     def _check(user: dict = Depends(get_current_user)) -> dict:
         if user.get("role") not in roles:
-            # In demo mode, warn but don't block
-            # (allows the credit officer to access borrower endpoints and vice versa)
-            pass
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{user.get('role')}' is not authorised for this resource.",
+            )
         return user
     return _check
 
 
-# ── Legacy stubs (kept so existing code that imports these doesn't break) ─────
+# ── Legacy stubs ──────────────────────────────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    """Demo stub — no actual hashing."""
-    return f"demo-hash-{password}"
+    from passlib.context import CryptContext
+    return CryptContext(schemes=["bcrypt"]).hash(password)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Demo stub — just compare."""
-    return hashed == f"demo-hash-{plain}"
+    from passlib.context import CryptContext
+    return CryptContext(schemes=["bcrypt"]).verify(plain, hashed)
 
 
 def create_access_token(subject: str | Any, role: str, extra: dict | None = None) -> str:
-    """Demo stub — returns a deterministic demo token."""
     return f"demo-token-{role.split('_')[0]}"
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    """Demo stub — looks up demo token."""
+    claims = _verify_cognito_token(token)
+    if claims:
+        return _claims_to_user(claims)
     return _DEMO_TOKENS.get(token, _DEFAULT_USER)

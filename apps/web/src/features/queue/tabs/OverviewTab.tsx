@@ -7,7 +7,7 @@ interface Props {
 }
 
 const OverviewTab: React.FC<Props> = ({ app }) => {
-  const dscrPos = app.dscr >= 1.2;
+  const dscrPos = (app.dscr ?? 0) >= 1.2;
   const bars = app.bars || [];
   const maxBar = Math.max(...bars, 1);
 
@@ -16,7 +16,7 @@ const OverviewTab: React.FC<Props> = ({ app }) => {
       <div className={styles.grid5} style={{ marginBottom: 14 }}>
         <div className={styles.card}>
           <div className={styles.cardTitle}>PD</div>
-          <div className={`${styles.cardVal} ${app.pd < 0.05 ? styles.valTeal : app.pd < 0.10 ? styles.valGold : styles.valRed}`}>{fmtPD(app.pd)}</div>
+          <div className={`${styles.cardVal} ${(app.pd ?? 1) < 0.05 ? styles.valTeal : (app.pd ?? 1) < 0.10 ? styles.valGold : styles.valRed}`}>{fmtPD(app.pd)}</div>
           <div className={styles.cardSub}>Probability of Default</div>
         </div>
         <div className={styles.card}>
@@ -36,7 +36,7 @@ const OverviewTab: React.FC<Props> = ({ app }) => {
         </div>
         <div className={styles.card}>
           <div className={styles.cardTitle}>Affordability</div>
-          <div className={`${styles.cardVal} ${app.affordability >= 0.6 ? styles.valTeal : styles.valRed}`}>{app.affordability != null ? (app.affordability * 100).toFixed(0) + '%' : '—'}</div>
+          <div className={`${styles.cardVal} ${(app.affordability ?? 0) >= 0.6 ? styles.valTeal : styles.valRed}`}>{app.affordability != null ? (app.affordability * 100).toFixed(0) + '%' : '—'}</div>
           <div className={styles.cardSub}>Capacity to repay</div>
         </div>
       </div>

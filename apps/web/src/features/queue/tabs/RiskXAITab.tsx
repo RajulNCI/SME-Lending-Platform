@@ -15,7 +15,7 @@ const RiskXAITab: React.FC<Props> = ({ app }) => {
       <div className={styles.grid3} style={{ marginBottom: 16 }}>
         <div className={styles.card}>
           <div className={styles.cardTitle}>PD (Probability of Default)</div>
-          <div className={`${styles.cardVal} ${app.pd < 0.05 ? styles.valTeal : app.pd < 0.10 ? styles.valGold : styles.valRed}`}>{fmtPD(app.pd)}</div>
+          <div className={`${styles.cardVal} ${(app.pd ?? 1) < 0.05 ? styles.valTeal : (app.pd ?? 1) < 0.10 ? styles.valGold : styles.valRed}`}>{fmtPD(app.pd)}</div>
           <div className={styles.cardSub}>Application PD model v3.2</div>
         </div>
         <div className={styles.card}>
@@ -33,10 +33,10 @@ const RiskXAITab: React.FC<Props> = ({ app }) => {
       <div className={styles.grid2} style={{ marginBottom: 16 }}>
         <div className={styles.card}>
           <div className={styles.cardTitle}>Affordability &amp; Capacity to Repay</div>
-          <div className={`${styles.cardVal} ${app.affordability >= 0.6 ? styles.valTeal : styles.valRed}`}>{app.affordability != null ? (app.affordability * 100).toFixed(0) + '%' : '—'}</div>
+          <div className={`${styles.cardVal} ${(app.affordability ?? 0) >= 0.6 ? styles.valTeal : styles.valRed}`}>{app.affordability != null ? (app.affordability * 100).toFixed(0) + '%' : '—'}</div>
           <div className={styles.cardSub}>Cash-flow based · Affordability model v2.0</div>
           <div className={styles.progressBar} style={{ marginTop: 10 }}>
-            <div className={styles.progressFill} style={{ width: `${app.affordability != null ? app.affordability * 100 : 0}%`, background: app.affordability >= 0.6 ? 'var(--teal)' : 'var(--red)' }} />
+            <div className={styles.progressFill} style={{ width: `${(app.affordability ?? 0) * 100}%`, background: (app.affordability ?? 0) >= 0.6 ? 'var(--teal)' : 'var(--red)' }} />
           </div>
         </div>
         <div className={styles.card}>
@@ -82,7 +82,7 @@ const RiskXAITab: React.FC<Props> = ({ app }) => {
       <div className={styles.card} style={{ marginBottom: 16 }}>
         {[
           { m: 'DSCR', base: `${app.dscr}×`, str: `${app.stressTest?.rateshockDscr}×`, pass: (app.stressTest?.rateshockDscr ?? 0) >= 1.2, thresh: 'min 1.20×' },
-          { m: 'Affordability', base: `${(app.affordability * 100).toFixed(0)}%`, str: `${((app.stressTest?.rateshockAff ?? 0) * 100).toFixed(0)}%`, pass: (app.stressTest?.rateshockAff ?? 0) >= 0.5, thresh: 'min 50%' },
+          { m: 'Affordability', base: `${((app.affordability ?? 0) * 100).toFixed(0)}%`, str: `${((app.stressTest?.rateshockAff ?? 0) * 100).toFixed(0)}%`, pass: (app.stressTest?.rateshockAff ?? 0) >= 0.5, thresh: 'min 50%' },
           { m: 'PD (recession overlay)', base: fmtPD(app.pd), str: fmtPD(app.stressTest?.recessionPD), pass: (app.stressTest?.recessionPD ?? 1) < 0.15, thresh: '< 15%' },
         ].map((r, i) => (
           <div key={i} className={styles.metricRow}>

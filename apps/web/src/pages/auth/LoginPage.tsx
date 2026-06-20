@@ -80,10 +80,13 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const hints = [
-    { user: 'borrower@company.ie / demo', role: 'SME Borrower' },
-    { user: 'officer@finpal.ie / demo', role: 'Credit Officer' },
-  ];
+  const cognitoEnabled = Boolean(import.meta.env.VITE_COGNITO_USER_POOL_ID);
+  const hints = cognitoEnabled
+    ? []
+    : [
+        { user: 'borrower@company.ie / demo', role: 'SME Borrower' },
+        { user: 'officer@finpal.ie / demo', role: 'Credit Officer' },
+      ];
 
   return (
     <Page>
@@ -148,18 +151,25 @@ const LoginPage: React.FC = () => {
               </SubmitBtn>
             </form>
 
-            <HintBox>
-              <HintTitle>Demo credentials</HintTitle>
-              {hints.map(h => (
-                <HintRow key={h.user}>
-                  <HintUser>{h.user}</HintUser>
-                  <HintRole>{h.role}</HintRole>
-                </HintRow>
-              ))}
-              <HintFooter>
-                Local demo mode — no registration needed. Use credentials above.
-              </HintFooter>
-            </HintBox>
+            {cognitoEnabled ? (
+              <HintBox>
+                <HintTitle>AWS Cognito authentication</HintTitle>
+                <HintFooter>Use the email and password you were assigned in the Cognito user pool.</HintFooter>
+              </HintBox>
+            ) : (
+              <HintBox>
+                <HintTitle>Demo credentials</HintTitle>
+                {hints.map(h => (
+                  <HintRow key={h.user}>
+                    <HintUser>{h.user}</HintUser>
+                    <HintRole>{h.role}</HintRole>
+                  </HintRow>
+                ))}
+                <HintFooter>
+                  Local demo mode — no registration needed. Use credentials above.
+                </HintFooter>
+              </HintBox>
+            )}
           </FormCard>
         </FormScroll>
       </FormPanel>

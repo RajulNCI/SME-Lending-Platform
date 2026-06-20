@@ -211,7 +211,7 @@ const QueuePage: React.FC = () => {
           {/* APP DETAIL VIEW */}
           {selectedAppId && selectedApp && (
             <ApplicationDetail 
-              app={selectedApp} 
+              app={selectedApp as any}
               onBack={() => setSelectedAppId(null)}
               onDecision={onDecision}
               submittedDecision={submitted[selectedApp.id] || selectedApp.decision}

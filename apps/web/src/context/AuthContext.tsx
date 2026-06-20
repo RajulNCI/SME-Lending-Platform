@@ -1,21 +1,55 @@
 /**
  * context/AuthContext.tsx
  *
- * Authentication context — LOCAL DEMO MODE.
- * Calls the local FastAPI /api/v1/auth/login endpoint which returns a simple
- * demo token + user info (no JWT, no Cognito).
+ * Authentication context — Cognito (production) with demo fallback.
  *
- * TODO: Replace with AWS Cognito integration for production.
+ * When VITE_COGNITO_USER_POOL_ID is set:
+ *   - Login calls AWS Cognito via amazon-cognito-identity-js (SRP flow)
+ *   - The Cognito IdToken is stored and sent as Bearer on every API request
+ *   - Session is restored on page reload from Cognito's local storage
+ *
+ * When VITE_COGNITO_USER_POOL_ID is NOT set (local dev without AWS):
+ *   - Falls back to the demo /api/v1/auth/login endpoint
+ *   - Demo credentials: borrower@company.ie / demo  or  officer@finpal.ie / demo
  */
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { apiFetch, clearAuth } from '../services/apiClient';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { apiFetch, clearAuth, setAuthToken } from '../services/apiClient';
 import { ROLE_LABELS, ROLE_BADGES } from '../types/auth';
 import type { AuthUser, UserRole } from '../types/auth';
+import { cognitoLogin, cognitoLogout, getCognitoSession } from '../services/cognitoAuth';
+
+// ── Cognito group → internal role ─────────────────────────────────────────────
+
+const GROUP_TO_ROLE: Record<string, UserRole> = {
+  Borrower:           'BORROWER',
+  CreditOfficer:      'CREDIT_OFFICER',
+  RiskManager:        'RISK_ANALYST',
+  ComplianceOfficer:  'COMPLIANCE_OFFICER',
+  MRMAnalyst:         'RISK_ANALYST',
+  OpsManager:         'BRANCH_MANAGER',
+  CollectionsOfficer: 'BRANCH_MANAGER',
+  Admin:              'ADMIN',
+};
+
+// Demo backend role → frontend role (fallback mode)
+const BACKEND_TO_FRONTEND_ROLE: Record<string, UserRole> = {
+  borrower_sme:        'BORROWER',
+  credit_officer:      'CREDIT_OFFICER',
+  risk_manager:        'RISK_ANALYST',
+  compliance_officer:  'COMPLIANCE_OFFICER',
+  ops_manager:         'BRANCH_MANAGER',
+  it_admin:            'ADMIN',
+  mrm_analyst:         'RISK_ANALYST',
+  collections_officer: 'BRANCH_MANAGER',
+};
+
+const COGNITO_ENABLED = Boolean(import.meta.env.VITE_COGNITO_USER_POOL_ID);
+
+// ── Context types ─────────────────────────────────────────────────────────────
 
 interface AuthContextType {
   user: AuthUser | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (data: any) => Promise<{ ok: boolean; message: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -23,80 +57,96 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   login: async () => false,
-  signup: async () => ({ ok: false, message: '' }),
   logout: () => {},
   loading: false,
 });
 
-// ── Role mapping: backend role → frontend role ──────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const BACKEND_TO_FRONTEND_ROLE: Record<string, UserRole> = {
-  borrower_sme: 'BORROWER',
-  credit_officer: 'CREDIT_OFFICER',
-  risk_manager: 'RISK_ANALYST',
-  compliance_officer: 'COMPLIANCE_OFFICER',
-  ops_manager: 'BRANCH_MANAGER',
-  it_admin: 'ADMIN',
-  mrm_analyst: 'RISK_ANALYST',
-  collections_officer: 'BRANCH_MANAGER',
-};
-
-// ── Restore session from storage ─────────────────────────────────────────────
-function restoreUser(): AuthUser | null {
-  try {
-    const raw = sessionStorage.getItem('finpal_auth');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed.user ?? null;
-  } catch {
-    return null;
+function groupsToRole(groups: string[]): UserRole {
+  for (const g of groups) {
+    if (g in GROUP_TO_ROLE) return GROUP_TO_ROLE[g];
   }
+  return 'BORROWER';
 }
 
-// ── Provider ─────────────────────────────────────────────────────────────────
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(restoreUser);
-  const [loading, setLoading] = useState(false);
+function makeAuthUser(email: string, displayName: string, role: UserRole): AuthUser {
+  return {
+    email,
+    username: email,
+    role,
+    displayName,
+    roleLabel: ROLE_LABELS[role] || role,
+    badge: ROLE_BADGES[role] || role.slice(0, 2),
+  };
+}
 
-  // ── Login ────────────────────────────────────────────────────────────────
+// ── Provider ──────────────────────────────────────────────────────────────────
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true); // true until session checked
+
+  // Restore session on mount
+  useEffect(() => {
+    (async () => {
+      if (COGNITO_ENABLED) {
+        try {
+          const session = await getCognitoSession();
+          if (session) {
+            setAuthToken(session.idToken);
+            const role = groupsToRole(session.groups);
+            setUser(makeAuthUser(session.email, session.displayName, role));
+          }
+        } catch {
+          // No valid session — stay logged out
+        }
+      } else {
+        // Demo mode: restore from sessionStorage
+        try {
+          const raw = sessionStorage.getItem('finpal_auth');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.user) {
+              setAuthToken(parsed.token);
+              setUser(parsed.user);
+            }
+          }
+        } catch {
+          // Ignore corrupt storage
+        }
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  // ── Login ──────────────────────────────────────────────────────────────────
+
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      // Call the local demo auth endpoint
+      if (COGNITO_ENABLED) {
+        const session = await cognitoLogin(email, password);
+        setAuthToken(session.idToken);
+        const role = groupsToRole(session.groups);
+        setUser(makeAuthUser(session.email, session.displayName, role));
+        return true;
+      }
+
+      // Demo fallback
       const res = await apiFetch<any>('/api/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username: email, password }),
       });
-
-      // The demo backend returns: { access_token, role, display_name, ... }
       const token = res.access_token || res.token || '';
-      if (!token) {
-        console.error('Login response missing token:', res);
-        return false;
-      }
+      if (!token) return false;
 
-      // Map backend role (e.g. "borrower_sme") → frontend role (e.g. "BORROWER")
       const backendRole = res.role || 'borrower_sme';
       const role = BACKEND_TO_FRONTEND_ROLE[backendRole] || 'BORROWER';
+      const authUser = makeAuthUser(email, res.display_name || email, role);
 
-      const authUser: AuthUser = {
-        email: email,
-        username: email,
-        role,
-        displayName: res.display_name || email,
-        roleLabel: ROLE_LABELS[role] || role,
-        badge: ROLE_BADGES[role] || role.slice(0, 2),
-      };
-
-      // Persist to sessionStorage
-      sessionStorage.setItem(
-        'finpal_auth',
-        JSON.stringify({
-          token,
-          user: authUser,
-        })
-      );
-
+      setAuthToken(token);
+      sessionStorage.setItem('finpal_auth', JSON.stringify({ token, user: authUser }));
       setUser(authUser);
       return true;
     } catch (err) {
@@ -107,20 +157,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // ── Signup (stub for demo) ──────────────────────────────────────────────
-  const signup = useCallback(async (_data: any): Promise<{ ok: boolean; message: string }> => {
-    return { ok: false, message: 'Signup is disabled in demo mode. Use the demo credentials.' };
-  }, []);
+  // ── Logout ─────────────────────────────────────────────────────────────────
 
-  // ── Logout ───────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
+    if (COGNITO_ENABLED) cognitoLogout();
     setUser(null);
     clearAuth();
-    sessionStorage.removeItem('finpal_user'); // legacy cleanup
+    sessionStorage.removeItem('finpal_auth');
+    sessionStorage.removeItem('finpal_user');
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

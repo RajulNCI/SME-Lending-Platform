@@ -45,14 +45,14 @@ export interface AppDetail {
   status: string;
   decisionOfficer?: string;
 
-  // AI assessment outputs
-  pd: number;
-  riskGrade: string;
-  dscr: number;
-  apr: number;
-  affordability: number;
-  lgd: number;
-  ead: number;
+  // AI assessment outputs (populated after processing — optional until assessment completes)
+  pd?: number;
+  riskGrade?: string;
+  dscr?: number;
+  apr?: number;
+  affordability?: number;
+  lgd?: number;
+  ead?: number;
 
   // Revenue (formatted strings from open banking / IDP)
   revenue?: string;
@@ -60,8 +60,8 @@ export interface AppDetail {
   cashflow?: string;
 
   // IFRS 9
-  ecl12m: number;
-  eclStage: 1 | 2 | 3;
+  ecl12m?: number;
+  eclStage?: 1 | 2 | 3;
   eclLifetime?: number;
 
   // PD confidence interval
