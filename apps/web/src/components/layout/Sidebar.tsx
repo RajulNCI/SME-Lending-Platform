@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
-import { UserRole } from '../../types/auth';
 import { getDecisions } from '../../services/AIApi';
 
 const Wrap = styled.aside<{ $c: boolean }>`
@@ -29,24 +28,6 @@ const Logo = styled.div`
   border-bottom: 0.5px solid #1a56a0;
   flex-shrink: 0;
 `;
-const LogoMark = styled.div`
-  width: 36px;
-  height: 36px;
-  background: #1d9e75;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: #fff;
-  flex-shrink: 0;
-`;
-const LogoText = styled.div<{ $v: boolean }>`
-  opacity: ${({ $v }) => ($v ? 1 : 0)};
-  transition: opacity 0.2s;
-  white-space: nowrap;
-`;
 const Nav = styled.nav`
   flex: 1;
   padding: 0.5rem 0;
@@ -67,7 +48,9 @@ const SectionLabel = styled.p<{ $v: boolean }>`
   opacity: ${({ $v }) => ($v ? 1 : 0)};
   transition: opacity 0.15s;
   white-space: nowrap;
-  ${({ $v }) => !$v && `
+  ${({ $v }) =>
+    !$v &&
+    `
     height: 0;
     margin: 0;
     padding: 0;
@@ -111,7 +94,9 @@ const NavLabel = styled.span<{ $v: boolean }>`
   transition: opacity 0.15s;
   flex: 1;
   white-space: nowrap;
-  ${({ $v }) => !$v && `
+  ${({ $v }) =>
+    !$v &&
+    `
     width: 0;
     flex: none;
     overflow: hidden;
@@ -129,7 +114,9 @@ const NavBadge = styled.span<{ $v: boolean; $n: number }>`
   text-align: center;
   opacity: ${({ $v, $n }) => ($v && $n >= 0 ? 1 : 0)};
   transition: opacity 0.15s;
-  ${({ $v }) => !$v && `
+  ${({ $v }) =>
+    !$v &&
+    `
     display: none;
   `}
 `;
@@ -149,7 +136,6 @@ const CollapseBtn = styled.button<{ $c: boolean }>`
     color: #fff;
   }
 `;
-
 
 type NavSection = {
   label: string;
@@ -225,9 +211,7 @@ const NAV: Record<string, NavSection[]> = {
   AUDITOR: [
     {
       label: 'Platform',
-      items: [
-        { icon: '◧', text: 'Audit Trail', to: '/audit' },
-      ],
+      items: [{ icon: '◧', text: 'Audit Trail', to: '/audit' }],
     },
     { label: 'My Account', items: [{ icon: '⚙', text: 'Settings', to: '/settings' }] },
   ],
@@ -263,7 +247,9 @@ const Sidebar: React.FC = () => {
       try {
         const d = await getDecisions();
         setQueueCount(Array.isArray(d) ? d.length : 0);
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     };
     load();
     const t = setInterval(load, 30000);
@@ -273,34 +259,21 @@ const Sidebar: React.FC = () => {
   if (!user) return null;
   const sections = NAV[user.role] || [];
 
-
   return (
     <Wrap $c={collapsed}>
       <Logo>
-        <LogoMark>F</LogoMark>
-        <LogoText $v={!collapsed}>
-          <div
-            style={{
-              fontFamily: "'Inter',sans-serif",
-              fontSize: '.9375rem',
-              fontWeight: 700,
-              color: '#fff',
-            }}
-          >
-            FinPal
-          </div>
-          <div
-            style={{
-              fontSize: '.5625rem',
-              color: '#1D9E75',
-              fontWeight: 600,
-              letterSpacing: '.08em',
-              textTransform: 'uppercase',
-            }}
-          >
-            v5.0 · Trustworthy AI
-          </div>
-        </LogoText>
+        <img
+          src="/finpal-logo.png"
+          alt="FinPal"
+          style={{
+            height: collapsed ? '26px' : '38px',
+            width: 'auto',
+            maxWidth: '100%',
+            background: '#0C2965',
+            borderRadius: '9px',
+            padding: '4px 8px',
+          }}
+        />
       </Logo>
 
       <Nav>

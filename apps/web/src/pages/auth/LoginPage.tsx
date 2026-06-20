@@ -8,10 +8,6 @@ import {
   Page,
   Brand,
   BrandTop,
-  LogoMark,
-  BrandName,
-  BrandTitle,
-  BrandSub,
   BrandHero,
   BrandHeadline,
   BrandDesc,
@@ -21,8 +17,6 @@ import {
   StatLabel,
   FormPanel,
   MobileNav,
-  MobileNavName,
-  MobileNavSub,
   FormScroll,
   FormCard,
   FormTitle,
@@ -40,7 +34,7 @@ import {
   HintRow,
   HintUser,
   HintRole,
-  HintFooter
+  HintFooter,
 } from '../../styles/pages/LoginPage.styles';
 
 const LoginPage: React.FC = () => {
@@ -51,10 +45,10 @@ const LoginPage: React.FC = () => {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{email?:string;password?:string}>({});
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   const validate = () => {
-    const e: {email?:string;password?:string} = {};
+    const e: { email?: string; password?: string } = {};
     if (!email.trim()) e.email = 'Email is required';
     if (!password) e.password = 'Password is required';
     setFieldErrors(e);
@@ -68,7 +62,10 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     const ok = await login(email.trim(), password);
     setLoading(false);
-    if (!ok) { setError('Invalid email or password.'); return; }
+    if (!ok) {
+      setError('Invalid email or password.');
+      return;
+    }
 
     // Read the stored user to get their role for redirect
     try {
@@ -89,30 +86,59 @@ const LoginPage: React.FC = () => {
     <Page>
       <Brand>
         <BrandTop>
-          <LogoMark>F</LogoMark>
-          <BrandName>
-            <BrandTitle>FinPal</BrandTitle>
-            <BrandSub>v5.0 · Trustworthy AI</BrandSub>
-          </BrandName>
+          <img
+            src="/finpal-logo.png"
+            alt="FinPal"
+            style={{
+              height: '60px',
+              width: 'auto',
+              background: '#0C2965',
+              borderRadius: '14px',
+              padding: '8px 14px',
+            }}
+          />
         </BrandTop>
         <BrandHero>
-          <BrandHeadline>Trustworthy AI<br />Loan Intake &<br />Assessment</BrandHeadline>
-          <BrandDesc>End-to-end AI-powered SME lending platform. EU AI Act compliant, GDPR Article 22 ready, EBA LOM aligned.</BrandDesc>
+          <BrandHeadline>
+            Trustworthy AI
+            <br />
+            Loan Intake &<br />
+            Assessment
+          </BrandHeadline>
+          <BrandDesc>
+            End-to-end AI-powered SME lending platform. EU AI Act compliant, GDPR Article 22 ready,
+            EBA LOM aligned.
+          </BrandDesc>
         </BrandHero>
         <Stats>
-          <Stat><StatVal>500ms</StatVal><StatLabel>Decision time</StatLabel></Stat>
-          <Stat><StatVal>70%+</StatVal><StatLabel>STP rate</StatLabel></Stat>
-          <Stat><StatVal>99.9%</StatVal><StatLabel>Uptime SLA</StatLabel></Stat>
+          <Stat>
+            <StatVal>500ms</StatVal>
+            <StatLabel>Decision time</StatLabel>
+          </Stat>
+          <Stat>
+            <StatVal>70%+</StatVal>
+            <StatLabel>STP rate</StatLabel>
+          </Stat>
+          <Stat>
+            <StatVal>99.9%</StatVal>
+            <StatLabel>Uptime SLA</StatLabel>
+          </Stat>
         </Stats>
       </Brand>
 
       <FormPanel>
         <MobileNav>
-          <LogoMark style={{width:'32px',height:'32px',fontSize:'.875rem'}}>F</LogoMark>
-          <div>
-            <MobileNavName>FinPal</MobileNavName>
-            <MobileNavSub style={{display:'block',marginTop:'1px'}}>v5.0 · Trustworthy AI</MobileNavSub>
-          </div>
+          <img
+            src="/finpal-logo.png"
+            alt="FinPal"
+            style={{
+              height: '36px',
+              width: 'auto',
+              background: '#0C2965',
+              borderRadius: '10px',
+              padding: '5px 10px',
+            }}
+          />
         </MobileNav>
 
         <FormScroll>
@@ -122,35 +148,64 @@ const LoginPage: React.FC = () => {
 
             {error && <AlertBox>{error}</AlertBox>}
 
-            <form onSubmit={handleSubmit} noValidate>
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+            >
               <Field>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="e.g. john@company.com"
-                  value={email} onChange={e=>{setEmail(e.target.value);setFieldErrors(p=>({...p,email:''}));}}
-                  $error={!!fieldErrors.email} autoComplete="email" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="e.g. john@company.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFieldErrors((p) => ({ ...p, email: '' }));
+                  }}
+                  $error={!!fieldErrors.email}
+                  autoComplete="email"
+                />
                 {fieldErrors.email && <ErrorMsg>{fieldErrors.email}</ErrorMsg>}
               </Field>
               <Field>
                 <Label htmlFor="password">Password</Label>
                 <PwWrapper>
-                  <Input id="password" type={showPw?'text':'password'} placeholder="Your password"
-                    value={password} onChange={e=>{setPassword(e.target.value);setFieldErrors(p=>({...p,password:''}));}}
-                    $error={!!fieldErrors.password} autoComplete="current-password"
-                    style={{paddingRight:'64px'}} />
-                  <PwToggle type="button" onClick={()=>setShowPw(p=>!p)}>
-                    {showPw?'Hide':'Show'}
+                  <Input
+                    id="password"
+                    type={showPw ? 'text' : 'password'}
+                    placeholder="Your password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setFieldErrors((p) => ({ ...p, password: '' }));
+                    }}
+                    $error={!!fieldErrors.password}
+                    autoComplete="current-password"
+                    style={{ paddingRight: '64px' }}
+                  />
+                  <PwToggle
+                    type="button"
+                    onClick={() => setShowPw((p) => !p)}
+                  >
+                    {showPw ? 'Hide' : 'Show'}
                   </PwToggle>
                 </PwWrapper>
                 {fieldErrors.password && <ErrorMsg>{fieldErrors.password}</ErrorMsg>}
               </Field>
-              <SubmitBtn type="submit" $loading={loading} disabled={loading} style={{marginTop:'.75rem'}}>
+              <SubmitBtn
+                type="submit"
+                $loading={loading}
+                disabled={loading}
+                style={{ marginTop: '.75rem' }}
+              >
                 {loading ? 'Signing in…' : 'Sign in to FinPal'}
               </SubmitBtn>
             </form>
 
             <HintBox>
               <HintTitle>Demo credentials</HintTitle>
-              {hints.map(h => (
+              {hints.map((h) => (
                 <HintRow key={h.user}>
                   <HintUser>{h.user}</HintUser>
                   <HintRole>{h.role}</HintRole>
