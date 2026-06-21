@@ -43,17 +43,17 @@ const QueuePage: React.FC = () => {
     setSelectedAppDetail(null);
     try {
       const raw = await getApplicationDetail(appId);
-      const shapCodes = (raw.shap_codes || []).map((s: any) => ({
+      const shapCodes: import('../../features/queue/types').ShapValue[] = (raw.shap_codes || []).map((s: any) => ({
         feature: s.feature,
         value: s.weight ?? s.value ?? 0,
-        direction: s.direction === 'reduces_risk' ? 'positive' : 'negative',
+        direction: (s.direction === 'reduces_risk' ? 'positive' : 'negative') as 'positive' | 'negative',
       }));
       const detail: AppDetail = {
         id: raw.id,
         company: raw.company_name || 'Unknown',
         crn: raw.crn,
         sector: raw.sector || 'N/A',
-        amount: `€${parseFloat(raw.loan_amount || 0).toLocaleString()}`,
+        amount: `€${parseFloat(String(raw.loan_amount ?? raw.loanAmount ?? 0)).toLocaleString()}`,
         loanType: raw.loan_purpose || 'N/A',
         status: raw.status,
         hitl: raw.status === 'hitl_queue',
@@ -67,18 +67,17 @@ const QueuePage: React.FC = () => {
         ead: raw.ead,
         ecl12m: raw.ecl_12m,
         eclLifetime: raw.ecl_lifetime,
-        eclStage: raw.ifrs9_stage,
+        eclStage: raw.ifrs9_stage as 1 | 2 | 3 | undefined,
         narrative: raw.narrative,
-        recommendation: raw.recommendation,
         shapValues: shapCodes,
         checks: raw.checks || [],
         bars: raw.bars || [],
         fairnessMetrics: raw.fairness_metrics,
         discrepancy: raw.discrepancy,
         discrepancyDetail: raw.discrepancy_detail,
-        revenue: raw.annual_revenue ? `€${parseFloat(raw.annual_revenue).toLocaleString()}` : undefined,
-        revenueActual: raw.revenue_actual,
-        cashflow: raw.free_cash_flow ? `€${parseFloat(raw.free_cash_flow).toLocaleString()}` : undefined,
+        revenue: raw.annual_revenue != null ? `€${parseFloat(String(raw.annual_revenue)).toLocaleString()}` : undefined,
+        revenueActual: raw.revenue_actual != null ? `€${parseFloat(String(raw.revenue_actual)).toLocaleString()}` : undefined,
+        cashflow: raw.free_cash_flow != null ? `€${parseFloat(String(raw.free_cash_flow)).toLocaleString()}` : undefined,
       };
       setSelectedAppDetail(detail);
     } catch (err) {
