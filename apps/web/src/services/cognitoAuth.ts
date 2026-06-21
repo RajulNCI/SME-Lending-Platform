@@ -19,10 +19,19 @@ import {
 const POOL_ID   = import.meta.env.VITE_COGNITO_USER_POOL_ID as string;
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID    as string;
 
-const userPool = new CognitoUserPool({
-  UserPoolId: POOL_ID,
-  ClientId:   CLIENT_ID,
-});
+// Lazy-init: never construct the pool at module load. If the Cognito env vars
+// are missing (e.g. preview build without config), the constructor would throw
+// "Both UserPoolId and ClientId are required" and white-screen the whole app.
+let _userPool: CognitoUserPool | null = null;
+function getUserPool(): CognitoUserPool {
+  if (!POOL_ID || !CLIENT_ID) {
+    throw new Error('Cognito is not configured (missing VITE_COGNITO_USER_POOL_ID / VITE_COGNITO_CLIENT_ID)');
+  }
+  if (!_userPool) {
+    _userPool = new CognitoUserPool({ UserPoolId: POOL_ID, ClientId: CLIENT_ID });
+  }
+  return _userPool;
+}
 
 export interface CognitoLoginResult {
   idToken: string;
@@ -43,7 +52,7 @@ export function cognitoLogin(email: string, password: string): Promise<CognitoLo
 
     const cognitoUser = new CognitoUser({
       Username: email,
-      Pool:     userPool,
+      Pool:     getUserPool(),
     });
 
     cognitoUser.authenticateUser(authDetails, {
@@ -95,7 +104,8 @@ export function cognitoLogin(email: string, password: string): Promise<CognitoLo
 // ── Logout ────────────────────────────────────────────────────────────────────
 
 export function cognitoLogout(): void {
-  const user = userPool.getCurrentUser();
+  if (!POOL_ID || !CLIENT_ID) return;
+  const user = getUserPool().getCurrentUser();
   if (user) user.signOut();
 }
 
@@ -103,7 +113,8 @@ export function cognitoLogout(): void {
 
 export function getCognitoSession(): Promise<CognitoLoginResult | null> {
   return new Promise((resolve) => {
-    const user = userPool.getCurrentUser();
+    if (!POOL_ID || !CLIENT_ID) { resolve(null); return; }
+    const user = getUserPool().getCurrentUser();
     if (!user) { resolve(null); return; }
 
     user.getSession((err: Error | null, session: CognitoUserSession | null) => {
