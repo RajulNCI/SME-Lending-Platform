@@ -7,7 +7,11 @@
  * - Typed request helpers
  */
 
-const API_BASE = ''; // Uses Vite proxy in dev → rewrites /api/* to AWS
+// Empty base in both dev and prod:
+//   Dev  → Vite proxy (vite.config.ts) rewrites /api/* to AWS
+//   Prod → Vercel rewrite (vercel.json) proxies /api/* to AWS
+// Both keep requests same-origin, avoiding CORS entirely.
+const API_BASE = '';
 
 // ── Token helpers ────────────────────────────────────────────────────────────
 
