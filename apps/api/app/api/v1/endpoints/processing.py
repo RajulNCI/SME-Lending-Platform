@@ -42,7 +42,7 @@ async def submit_application(
 
     job = ProcessingJob(
         application_id=application_id,
-        status=JobStatus.queued,
+        status=JobStatus.pending,
         current_step=None,
         progress=0,
         steps_log=[],

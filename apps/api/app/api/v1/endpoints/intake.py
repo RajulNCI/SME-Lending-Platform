@@ -20,10 +20,13 @@ from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy import select
+
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.application import Application, ApplicationStatus
 from app.models.processing_job import JobStatus, ProcessingJob
+from app.models.user import User, UserRole
 from app.services.queue import job_queue
 
 router = APIRouter(tags=["intake"])
@@ -75,7 +78,25 @@ async def submit_application(
         except (BotoCoreError, ClientError):
             pass  # non-fatal — Lambda will still run with whatever was uploaded
 
-    # 2. Save Application to RDS
+    # 2. Ensure borrower exists in users table (upsert)
+    borrower_db_id: str | None = None
+    if requestedBy:
+        result = await db.execute(select(User).where(User.username == requestedBy))
+        user = result.scalar_one_or_none()
+        if not user:
+            user = User(
+                username=requestedBy,
+                email=requestedBy if "@" in requestedBy else f"{requestedBy}@finpal.ie",
+                display_name=requestedBy,
+                role=UserRole.borrower_sme,
+                is_active=True,
+                hashed_pw="cognito",
+            )
+            db.add(user)
+            await db.flush()
+        borrower_db_id = user.id
+
+    # 3. Save Application to RDS
     app = Application(
         id=app_id,
         reference=reference,
@@ -103,16 +124,16 @@ async def submit_application(
         consent_ccr=True,
         consent_ai_decision=True,
         consent_timestamp=now,
-        borrower_id=requestedBy,
+        borrower_id=borrower_db_id,
         status=ApplicationStatus.submitted,
     )
     db.add(app)
 
-    # 3. Create ProcessingJob so UI can poll progress
+    # 4. Create ProcessingJob so UI can poll progress
     job = ProcessingJob(
         id=job_id,
         application_id=app_id,
-        status=JobStatus.queued,
+        status=JobStatus.pending,
         current_step=None,
         progress=0,
         steps_log=[],
@@ -120,7 +141,7 @@ async def submit_application(
     db.add(job)
     await db.commit()
 
-    # 4. Enqueue message — Lambda AI worker picks it up from SQS
+    # 5. Enqueue message — Lambda AI worker picks it up from SQS
     message = {
         "job_id": job_id,
         "application_id": app_id,

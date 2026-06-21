@@ -37,7 +37,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   decision,
 }) => {
   // ✅ FIX 1: hoisted out of map so it can control the bigSpinner below
-  const isAwaitingOfficer = !decision && !isComplete && currentStep === 4;
+  const isAwaitingOfficer = isComplete && !decision;
 
   return (
     <div className={styles.processCard}>

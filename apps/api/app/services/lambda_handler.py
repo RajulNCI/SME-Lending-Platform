@@ -89,26 +89,27 @@ def lambda_handler(event: dict, context) -> dict:
 def _process(application_id: str, job_id: str, s3_keys: list[str]) -> None:
     _ensure_app_code_importable()
 
-    _update_job(job_id, application_id, "processing", step="OCR_STARTED", progress=10)
+    # Step 1 — Application received (already submitted)
+    _update_job(job_id, application_id, "running", step="APPLICATION_SUBMITTED", progress=10)
 
-    # 1. Download documents from S3
+    # Step 2 — IDP / OCR extraction
+    _update_job(job_id, application_id, "running", step="IDP_OCR", progress=25)
     doc_paths = _download_documents(s3_keys)
-
-    # 2. IDP extraction
-    _update_job(job_id, application_id, "processing", step="AI_EXTRACTION", progress=30)
     extracted = _run_idp(doc_paths)
 
-    # 3. Load application base fields from RDS (fill gaps not covered by OCR)
+    # Load application base fields from RDS
     app_fields = _load_application_fields(application_id)
-    # OCR extracted fields take precedence over stored defaults
     data = {**app_fields, **{k: v for k, v in extracted.items() if v is not None}}
 
-    # 4. AI credit assessment (PD model + credit metrics)
-    _update_job(job_id, application_id, "processing", step="RISK_SCORING", progress=60)
+    # Step 3 — Rules engine (credit policy evaluation)
+    _update_job(job_id, application_id, "running", step="RULES_ENGINE", progress=50)
+
+    # Step 4 — PD AI model scoring (rules_evaluate + assess called together)
+    _update_job(job_id, application_id, "running", step="PD_AI_MODEL", progress=75)
     result = _run_assessment(data)
 
-    # 5. Persist results to RDS
-    _update_job(job_id, application_id, "processing", step="DECISION_GENERATED", progress=90)
+    # Step 5 — Persist results to RDS (decision saved)
+    _update_job(job_id, application_id, "running", step="DECISION_SAVED", progress=95)
     _persist_results(application_id, extracted, result)
 
     _update_job(job_id, application_id, "completed", step="COMPLETED", progress=100)

@@ -75,6 +75,21 @@ async def create_application(
     return ApplicationOut.model_validate(app)
 
 
+@router.get("/queue", response_model=list[ApplicationListOut], summary="Credit officer HITL queue")
+async def get_queue(
+    token_data: dict = Depends(require_roles(*CREDIT_ROLES)),
+    db: AsyncSession = Depends(get_db),
+) -> list[ApplicationListOut]:
+    result = await db.execute(
+        select(Application)
+        .where(Application.status == ApplicationStatus.hitl_queue)
+        .order_by(desc(Application.created_at))
+        .limit(100)
+    )
+    apps = result.scalars().all()
+    return [ApplicationListOut.model_validate(a) for a in apps]
+
+
 @router.get("/{application_id}", response_model=ApplicationOut, summary="Get application detail")
 async def get_application(
     application_id: str,

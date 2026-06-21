@@ -89,7 +89,7 @@ async def process_job(job_id: str, session_factory=AsyncSessionLocal) -> None:
             return
 
         try:
-            job.status = JobStatus.processing
+            job.status = JobStatus.running
             await db.commit()
 
             # ---- Engine 1: documents -> fields ----
