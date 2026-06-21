@@ -25,13 +25,40 @@ export interface ApplicationStatusResponse {
   applicationId?: string;
   status: string;
   companyName?: string;
+  company_name?: string;
   sector?: string;
   loanAmount?: number;
+  loan_amount?: number;
   loanType?: string;
+  loan_purpose?: string;
   assessment?: any;
   decision?: string;
   createdAt?: string;
   updatedAt?: string;
+  // AI assessment fields
+  pd?: number;
+  risk_grade?: string;
+  dscr?: number;
+  apr?: number;
+  affordability?: number;
+  lgd?: number;
+  ead?: number;
+  ecl_12m?: number;
+  ecl_lifetime?: number;
+  ifrs9_stage?: number;
+  narrative?: string;
+  recommendation?: string;
+  shap_codes?: Array<{ feature: string; weight?: number; value?: number; direction?: string }>;
+  checks?: any[];
+  bars?: number[];
+  fairness_metrics?: { disparateImpact: number; equalOpportunity: number };
+  discrepancy?: boolean;
+  discrepancy_detail?: string;
+  annual_revenue?: number;
+  revenue_actual?: number;
+  free_cash_flow?: number;
+  crn?: string;
+  [key: string]: any;
 }
 
 export interface QueueApplicationSummary {
