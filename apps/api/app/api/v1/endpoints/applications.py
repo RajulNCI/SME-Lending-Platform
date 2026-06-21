@@ -39,9 +39,15 @@ async def list_applications(
     query = select(Application).order_by(desc(Application.created_at)).limit(limit).offset(offset)
     if status_filter:
         query = query.where(Application.status == status_filter)
-        
+
     if token_data.get("role") == "borrower_sme":
-        query = query.where(Application.borrower_id == token_data["sub"])
+        # Applications are linked to a User row (upserted on intake by username),
+        # so borrower_id is that user's UUID — not the token `sub`. Match by
+        # username → user.id so borrowers see their own applications.
+        username = token_data.get("username")
+        user_result = await db.execute(select(User.id).where(User.username == username))
+        user_id = user_result.scalar_one_or_none()
+        query = query.where(Application.borrower_id == user_id)
 
     result = await db.execute(query)
     apps = result.scalars().all()
