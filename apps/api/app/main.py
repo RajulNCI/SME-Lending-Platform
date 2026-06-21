@@ -8,7 +8,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.api.v1.endpoints.local_ai import router as local_ai_router
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.database import Base, engine
@@ -31,16 +30,24 @@ async def lifespan(app: FastAPI):
 
     # Create tables if they don't exist (use Alembic in production)
     if settings.ENVIRONMENT in ("development", "test"):
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("finpal.db.tables_ready")
+        except Exception as e:
+            logger.warning("finpal.db.unreachable", error=str(e))
 
-    # background worker consuming the processing queue (mirrors the HLD Lambda worker)
-    worker_task = asyncio.create_task(worker_loop(job_queue))
-    logger.info("finpal.worker.started")
+    # Local in-process worker — only used when SQS is not configured.
+    # In production, Lambda reads from SQS instead.
+    worker_task = None
+    if not settings.AWS_SQS_QUEUE_URL:
+        worker_task = asyncio.create_task(worker_loop(job_queue))
+        logger.info("finpal.worker.started")
 
     yield
 
-    worker_task.cancel()
+    if worker_task:
+        worker_task.cancel()
     logger.info("finpal.shutdown")
     await engine.dispose()
 
@@ -83,8 +90,13 @@ add_cors(app)
 # Routers
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 
-# Local AI orchestration routes (mounted at /local-ai, no auth for dev convenience)
-app.include_router(local_ai_router)
+# Local AI routes only in dev (not needed in production — Lambda handles AI)
+if settings.ENVIRONMENT != "production":
+    try:
+        from app.api.v1.endpoints.local_ai import router as local_ai_router
+        app.include_router(local_ai_router)
+    except ImportError:
+        pass
 
 
 @app.exception_handler(Exception)

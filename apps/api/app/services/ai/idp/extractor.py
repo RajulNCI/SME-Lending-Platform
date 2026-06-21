@@ -47,6 +47,8 @@ TAG_TO_FIELD = {
     "REVENUE": "annual_revenue",
     "EBITDA": "ebitda",
     "NETPROFIT": "net_profit",
+    "FCF": "free_cash_flow",
+    "DEBTSERVICE": "annual_debt_service",
     "ASSETS": "total_assets",
     "LIABILITIES": "total_liabilities",
     "DEBT": "existing_debt",

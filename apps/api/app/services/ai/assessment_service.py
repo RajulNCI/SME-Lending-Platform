@@ -14,6 +14,7 @@ from app.services.ai import credit_metrics as cm
 from app.services.ai import narrative
 from app.services.ai.feature_builder import build_features
 from app.services.ai.pd_scorer import model_version, score
+from app.services.rules_engine.engine import evaluate as rules_evaluate
 
 # fields that exist as columns on the Application model
 _PERSISTED = (
@@ -51,10 +52,17 @@ def assess(app: dict) -> dict:
     term = int(app.get("loan_term_months") or 36)
     apr = cm.apr(s["risk_grade"], term, has_col)
 
+    # Run rules engine — passes PD + LGD from ML model so rules engine uses them
+    rules = rules_evaluate({**app, "pd": s["pd"], "lgd": lgd})
+
     result = {
+        # PD model outputs
         "pd": s["pd"],
         "risk_grade": s["risk_grade"],
         "ai_score": s["ai_score"],
+        "shap_codes": s["shap_codes"],
+        "model_version": model_version(),
+        # Credit metrics (authoritative values — override rules engine where they overlap)
         "dscr": dscr,
         "apr": apr,
         "affordability": aff,
@@ -63,9 +71,17 @@ def assess(app: dict) -> dict:
         "ecl_12m": ecl,
         "ecl_lifetime": cm.ecl_lifetime(s["pd"], lgd, ead, term),
         "ifrs9_stage": stage,
-        "shap_codes": s["shap_codes"],
         "recommendation": rec,
-        "model_version": model_version(),
+        # Rules engine outputs (compliance, fairness, open banking, reconciliation)
+        "rules_output": rules,
+        "checks": rules.get("checks", []),
+        "discrepancy": rules.get("discrepancy"),
+        "discrepancy_detail": rules.get("discrepancyDetail"),
+        "revenue_actual": rules.get("revenueActual"),
+        "cashflow": rules.get("cashflow"),
+        "bars": rules.get("bars", []),
+        "fairness_metrics": rules.get("fairnessMetrics"),
+        "recommended_status": rules.get("recommendedStatus"),
     }
     result["narrative"] = narrative.generate(result)
     return result

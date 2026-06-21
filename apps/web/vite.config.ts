@@ -16,15 +16,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/local-ai': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-      '/health': {
-        target: 'http://localhost:8000',
+        target: 'https://tvuegpy2w7.execute-api.us-east-1.amazonaws.com/prod',
         changeOrigin: true,
       },
     },

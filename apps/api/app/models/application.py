@@ -3,8 +3,8 @@ Application model — represents an SME loan application through
 all stages of the FinPal intake pipeline.
 """
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy import String, Numeric, DateTime, Integer, JSON, Enum as SAEnum, ForeignKey, Text
+from datetime import date, datetime, timezone
+from sqlalchemy import String, Numeric, DateTime, Date, Integer, JSON, Boolean, Enum as SAEnum, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 import enum
@@ -46,13 +46,33 @@ class Application(Base):
     purpose_detail:Mapped[str]   = mapped_column(Text, nullable=False)
     has_collateral:Mapped[bool]  = mapped_column(default=False)
     collateral_detail: Mapped[str | None] = mapped_column(Text, nullable=True)
-    # Financials (declared)
+    # Financials (declared — extracted from credit file)
     annual_revenue:    Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
+    ebitda:            Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
     net_profit:        Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
     total_assets:      Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
     total_liabilities: Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
     existing_debt:     Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
+    free_cash_flow:    Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
     monthly_repayment: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    annual_debt_service: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    # Open banking (bank statement)
+    iban:              Mapped[str | None]   = mapped_column(String(40), nullable=True)
+    account_mask:      Mapped[str | None]   = mapped_column(String(20), nullable=True)
+    statement_period:  Mapped[str | None]   = mapped_column(String(50), nullable=True)
+    actual_revenue:    Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)
+    monthly_lodgements: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Tax clearance (compliance)
+    tax_reg_no:             Mapped[str | None]  = mapped_column(String(30), nullable=True)
+    tax_access_no:          Mapped[str | None]  = mapped_column(String(30), nullable=True)
+    tax_clearance_status:   Mapped[str | None]  = mapped_column(String(20), nullable=True)
+    tax_clearance_issued:   Mapped[date | None] = mapped_column(Date, nullable=True)
+    tax_clearance_valid_until: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Director ID / KYC (AML)
+    director_dob:        Mapped[date | None] = mapped_column(Date, nullable=True)
+    director_id_number:  Mapped[str | None]  = mapped_column(String(50), nullable=True)
+    director_nationality: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    id_verified:         Mapped[bool]        = mapped_column(Boolean, default=False)
     # AI assessment output (populated after processing)
     ai_score:       Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     risk_grade:     Mapped[str | None]   = mapped_column(String(5), nullable=True)
@@ -69,10 +89,11 @@ class Application(Base):
     rules_output:   Mapped[dict | None]  = mapped_column(JSON, nullable=True)
     narrative:      Mapped[str | None]   = mapped_column(Text, nullable=True)
     recommendation: Mapped[str | None]   = mapped_column(String(20), nullable=True)
-    # GDPR consents (EU AI Act Art.22)
-    consent_data_processing: Mapped[bool] = mapped_column(default=False)
-    consent_ccr:             Mapped[bool] = mapped_column(default=False)
-    consent_ai_decision:     Mapped[bool] = mapped_column(default=False)
+    # GDPR consents (EU AI Act Art.22) — 4 consents from consent form
+    consent_data_processing: Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_ccr:             Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_ai_decision:     Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_data_retention:  Mapped[bool] = mapped_column(Boolean, default=False)
     consent_timestamp:       Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Status and metadata
     status:        Mapped[ApplicationStatus] = mapped_column(SAEnum(ApplicationStatus), default=ApplicationStatus.draft, nullable=False)

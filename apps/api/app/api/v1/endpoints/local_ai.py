@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.application import Application, ApplicationStatus
-from app.services.rules_engine.engine import RulesEngine
+from app.services.rules_engine.engine import evaluate as rules_evaluate
 
 logger = logging.getLogger("finpal.local_ai")
 
@@ -104,9 +104,8 @@ async def process_ai(
         assessment = ml_result.get("assessment", {})
 
         stage = "rules"
-        rules_result = RulesEngine().evaluate(
+        rules_result = rules_evaluate(
             {**features, "dscr": assessment.get("dscr", 1.2)},
-            assessment,
         )
 
         stage = "persist"

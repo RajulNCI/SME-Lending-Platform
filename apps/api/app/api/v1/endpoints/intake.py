@@ -1,12 +1,12 @@
 """
-intake — simplified application creation for the React frontend demo.
+intake — simplified application submission for the React borrower form.
 
-The full ApplicationCreate schema requires 15+ mandatory fields (CRN, director
-info, GDPR consents, etc.), but the React BorrowerApplyPage form only sends
-{companyName, sector, loanAmount, loanType}. This endpoint fills sensible
-defaults for missing fields so the demo flow works end-to-end.
-
-In production, the full intake form would supply everything.
+Flow:
+  1. Accept minimal form fields (company, sector, amount, documents)
+  2. Save Application + ProcessingJob to RDS
+  3. Upload documents to S3
+  4. Send SQS message → Lambda AI worker picks it up asynchronously
+  5. Return app_id immediately — UI polls /status for progress
 """
 
 from __future__ import annotations
@@ -15,17 +15,33 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.application import Application, ApplicationStatus
+from app.models.processing_job import JobStatus, ProcessingJob
+from app.services.queue import job_queue
 
 router = APIRouter(tags=["intake"])
 
+_s3 = boto3.client("s3", region_name=settings.AWS_REGION)
 
-@router.post("/applications/submit", summary="Simplified application submission (demo)")
-async def submit_simple(
+PURPOSE_MAP = {
+    "WORKING_CAPITAL": "Working Capital",
+    "EQUIPMENT_FINANCE": "Equipment Finance",
+    "EXPANSION": "Expansion",
+    "COMMERCIAL_MORTGAGE": "Commercial Mortgage",
+    "REFINANCE": "Refinance",
+    "OTHER": "Other",
+}
+
+
+@router.post("/applications/submit", summary="Borrower application submission")
+async def submit_application(
     companyName: str = Form("Borrower SME Ltd"),
     sector: str = Form("Technology"),
     loanAmount: str = Form("50000"),
@@ -34,25 +50,32 @@ async def submit_simple(
     files: list[UploadFile] = File(default=[]),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """
-    Simplified submission that accepts the minimal fields the React form sends
-    and fills in demo defaults for everything else.
-    """
     import random
 
     app_id = str(uuid.uuid4())
+    job_id = str(uuid.uuid4())
     reference = f"FP-{datetime.now().year}-{random.randint(1000, 9999)}"
+    now = datetime.now(timezone.utc)
 
-    # Map frontend loanType to the backend enum
-    purpose_map = {
-        "WORKING_CAPITAL": "Working Capital",
-        "EQUIPMENT_FINANCE": "Equipment Finance",
-        "EXPANSION": "Expansion",
-        "COMMERCIAL_MORTGAGE": "Commercial Mortgage",
-        "REFINANCE": "Refinance",
-        "OTHER": "Other",
-    }
+    # 1. Upload documents to S3, collect keys
+    s3_document_keys: list[str] = []
+    for upload in files:
+        if not upload.filename:
+            continue
+        key = f"documents/{app_id}/{upload.filename}"
+        try:
+            content = await upload.read()
+            _s3.put_object(
+                Bucket=settings.AWS_S3_DOCUMENTS_BUCKET,
+                Key=key,
+                Body=content,
+                ContentType=upload.content_type or "application/octet-stream",
+            )
+            s3_document_keys.append(key)
+        except (BotoCoreError, ClientError):
+            pass  # non-fatal — Lambda will still run with whatever was uploaded
 
+    # 2. Save Application to RDS
     app = Application(
         id=app_id,
         reference=reference,
@@ -66,34 +89,51 @@ async def submit_simple(
         eircode="D01 AB12",
         years_trading="5",
         loan_amount=float(loanAmount),
-        loan_purpose=purpose_map.get(loanType, loanType),
+        loan_purpose=PURPOSE_MAP.get(loanType, loanType),
         loan_term_months=36,
-        purpose_detail=f"{purpose_map.get(loanType, loanType)} loan for {companyName}",
+        purpose_detail=f"{PURPOSE_MAP.get(loanType, loanType)} loan for {companyName}",
         has_collateral=False,
-        # Demo financial defaults
         annual_revenue=500_000,
         net_profit=75_000,
         total_assets=800_000,
         total_liabilities=300_000,
         existing_debt=50_000,
         monthly_repayment=2_500,
-        # GDPR consents (auto-accepted for demo)
         consent_data_processing=True,
         consent_ccr=True,
         consent_ai_decision=True,
-        consent_timestamp=datetime.now(timezone.utc),
+        consent_timestamp=now,
         borrower_id=requestedBy,
         status=ApplicationStatus.submitted,
     )
-
     db.add(app)
-    await db.flush()
+
+    # 3. Create ProcessingJob so UI can poll progress
+    job = ProcessingJob(
+        id=job_id,
+        application_id=app_id,
+        status=JobStatus.queued,
+        current_step=None,
+        progress=0,
+        steps_log=[],
+    )
+    db.add(job)
+    await db.commit()
+
+    # 4. Enqueue message — Lambda AI worker picks it up from SQS
+    message = {
+        "job_id": job_id,
+        "application_id": app_id,
+        "s3_document_keys": s3_document_keys,
+    }
+    await job_queue.enqueue(message)
 
     return {
         "id": app_id,
         "applicationId": app_id,
+        "jobId": job_id,
         "reference": reference,
         "status": "SUBMITTED",
-        "createdAt": datetime.now(timezone.utc).isoformat(),
-        "message": "Application submitted successfully",
+        "createdAt": now.isoformat(),
+        "message": "Application submitted — AI processing started",
     }
