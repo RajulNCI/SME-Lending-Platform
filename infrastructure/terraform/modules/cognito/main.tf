@@ -21,10 +21,10 @@ resource "aws_cognito_user_pool" "main" {
 
   # Capture company domain at signup so email looks like firstname@company.ie
   schema {
-    name                     = "company_name"
-    attribute_data_type      = "String"
-    mutable                  = true
-    required                 = false
+    name                = "company_name"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
     string_attribute_constraints {
       min_length = 2
       max_length = 100
@@ -32,10 +32,10 @@ resource "aws_cognito_user_pool" "main" {
   }
 
   schema {
-    name                     = "role"
-    attribute_data_type      = "String"
-    mutable                  = true
-    required                 = false
+    name                = "role"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
     string_attribute_constraints {
       min_length = 2
       max_length = 50
@@ -68,9 +68,9 @@ resource "aws_cognito_user_pool_client" "web" {
   ]
 
   # Token validity
-  access_token_validity  = 8   # hours
+  access_token_validity  = 8 # hours
   id_token_validity      = 8
-  refresh_token_validity = 30  # days
+  refresh_token_validity = 30 # days
 
   token_validity_units {
     access_token  = "hours"
