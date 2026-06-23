@@ -185,7 +185,7 @@ jobs:
         with:
           target: 'https://finpals-prototype.vercel.app' # Replace with actual staging URL or local docker instance
           fail_action: false # Set to false initially to review reports without blocking CI
-          rules_file_name: '.zap/rules.tsv'
+          allow_issue_writing: false # Don't open GitHub issues (token lacks issues:write); report artifacts are still uploaded
           cmd_options: '-a'
 
   # ── Terraform validate (infra changes only) ────────────────────────────────
