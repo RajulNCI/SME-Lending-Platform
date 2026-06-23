@@ -32,6 +32,7 @@ async def assess_stateless(
     """Production integration point: backend sends fields, gets the assessment JSON to
     store in its own database (DynamoDB). No persistence here."""
     from app.services.ai.assessment_service import assess
+
     data = body.model_dump(exclude={"reference"})
     assessment = assess(data)
     return AssessmentOut(application_id=body.reference, **assessment)
@@ -73,6 +74,7 @@ async def run_assessment(
         raise HTTPException(status_code=404, detail="Application not found")
 
     from app.services.ai.assessment_service import apply_to_orm, assess
+
     app_data = {f: getattr(application, f, None) for f in _FIELDS}
     assessment = assess(app_data)
 

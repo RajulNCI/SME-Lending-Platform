@@ -4,17 +4,16 @@ Decision endpoints — HITL decision making.
 POST /api/v1/applications/{id}/decisions → Credit Officer submits decision
 GET  /api/v1/applications/{id}/decisions → List decisions for an application
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import require_roles
-from app.models.application import Application
-from app.models.user import User
 from app.schemas.decision import DecisionCreate, DecisionOut
-from app.services.decision_service import DecisionService
 from app.services.audit_service import AuditService
+from app.services.decision_service import DecisionService
 
 router = APIRouter(tags=["decisions"])
 
@@ -68,10 +67,13 @@ async def create_decision(
 )
 async def list_decisions(
     application_id: str,
-    token_data: dict = Depends(require_roles("credit_officer","compliance_officer","it_admin")),
+    token_data: dict = Depends(
+        require_roles("credit_officer", "compliance_officer", "it_admin")
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> list[DecisionOut]:
     from app.models.decision import Decision
+
     result = await db.execute(
         select(Decision)
         .where(Decision.application_id == application_id)

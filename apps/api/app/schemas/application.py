@@ -1,12 +1,15 @@
 """Application schemas."""
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional, Any
+
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
+
+from pydantic import BaseModel, field_validator
 
 
 class ApplicationCreate(BaseModel):
     """Submitted by borrower via loan application form."""
+
     company_name: str
     crn: str
     sector: str
@@ -14,20 +17,20 @@ class ApplicationCreate(BaseModel):
     director_email: str
     director_phone: str
     address: str
-    eircode: Optional[str] = None
+    eircode: str | None = None
     years_trading: str
     loan_amount: Decimal
     loan_purpose: str
     loan_term_months: int
     purpose_detail: str
     has_collateral: bool = False
-    collateral_detail: Optional[str] = None
-    annual_revenue: Optional[Decimal] = None
-    net_profit: Optional[Decimal] = None
-    total_assets: Optional[Decimal] = None
-    total_liabilities: Optional[Decimal] = None
-    existing_debt: Optional[Decimal] = None
-    monthly_repayment: Optional[Decimal] = None
+    collateral_detail: str | None = None
+    annual_revenue: Decimal | None = None
+    net_profit: Decimal | None = None
+    total_assets: Decimal | None = None
+    total_liabilities: Decimal | None = None
+    existing_debt: Decimal | None = None
+    monthly_repayment: Decimal | None = None
     consent_data_processing: bool
     consent_ccr: bool
     consent_ai_decision: bool
@@ -49,15 +52,16 @@ class ApplicationCreate(BaseModel):
 
 class AIAssessmentUpdate(BaseModel):
     """Posted by Nathan's Credit Officer AI agent."""
-    ai_score: Optional[float] = None
-    risk_grade: Optional[str] = None
-    pd: Optional[float] = None
-    dscr: Optional[float] = None
-    apr: Optional[float] = None
-    affordability: Optional[float] = None
-    ecl_12m: Optional[float] = None
-    shap_codes: Optional[list[dict[str, Any]]] = None
-    ifrs9_stage: Optional[int] = None
+
+    ai_score: float | None = None
+    risk_grade: str | None = None
+    pd: float | None = None
+    dscr: float | None = None
+    apr: float | None = None
+    affordability: float | None = None
+    ecl_12m: float | None = None
+    shap_codes: list[dict[str, Any]] | None = None
+    ifrs9_stage: int | None = None
     model_version: str = "finpal-pd-v2.4.1"
 
 
@@ -71,13 +75,13 @@ class ApplicationOut(BaseModel):
     loan_purpose: str
     loan_term_months: int
     status: str
-    risk_grade: Optional[str] = None
-    pd: Optional[float] = None
-    dscr: Optional[float] = None
-    apr: Optional[float] = None
-    ai_score: Optional[float] = None
-    ifrs9_stage: Optional[int] = None
-    shap_codes: Optional[list[dict[str, Any]]] = None
+    risk_grade: str | None = None
+    pd: float | None = None
+    dscr: float | None = None
+    apr: float | None = None
+    ai_score: float | None = None
+    ifrs9_stage: int | None = None
+    shap_codes: list[dict[str, Any]] | None = None
     model_version: str
     created_at: datetime
     updated_at: datetime
@@ -93,10 +97,10 @@ class ApplicationListOut(BaseModel):
     loan_amount: Decimal
     loan_purpose: str
     status: str
-    risk_grade: Optional[str] = None
-    pd: Optional[float] = None
-    dscr: Optional[float] = None
-    ifrs9_stage: Optional[int] = None
+    risk_grade: str | None = None
+    pd: float | None = None
+    dscr: float | None = None
+    ifrs9_stage: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

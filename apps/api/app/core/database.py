@@ -4,6 +4,7 @@ Async SQLAlchemy database session.
 Connects to PostgreSQL (RDS) when DATABASE_URL is set.
 Falls back to SQLite for local development without AWS.
 """
+
 from __future__ import annotations
 
 import os
@@ -32,7 +33,9 @@ def _get_database_url() -> str:
         )
 
     # Fallback: local SQLite (dev without AWS)
-    db_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    db_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     db_path = os.path.join(db_dir, "finpal_demo.db")
     return f"sqlite+aiosqlite:///{db_path}"
 

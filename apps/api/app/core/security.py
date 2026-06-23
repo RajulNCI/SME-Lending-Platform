@@ -14,10 +14,10 @@ The IdToken carries:
   - name / given_name / family_name  → display name
   - custom:company_name → company (for borrowers)
 """
+
 from __future__ import annotations
 
 import threading
-from functools import lru_cache
 from typing import Any
 
 import httpx
@@ -32,14 +32,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=F
 # ── Cognito group → internal role ────────────────────────────────────────────
 
 _GROUP_TO_ROLE: dict[str, str] = {
-    "Borrower":            "borrower_sme",
-    "CreditOfficer":       "credit_officer",
-    "RiskManager":         "risk_manager",
-    "ComplianceOfficer":   "compliance_officer",
-    "MRMAnalyst":          "mrm_analyst",
-    "OpsManager":          "ops_manager",
-    "CollectionsOfficer":  "collections_officer",
-    "Admin":               "it_admin",
+    "Borrower": "borrower_sme",
+    "CreditOfficer": "credit_officer",
+    "RiskManager": "risk_manager",
+    "ComplianceOfficer": "compliance_officer",
+    "MRMAnalyst": "mrm_analyst",
+    "OpsManager": "ops_manager",
+    "CollectionsOfficer": "collections_officer",
+    "Admin": "it_admin",
 }
 
 # ── Demo tokens (fallback for local dev without Cognito) ─────────────────────
@@ -212,6 +212,7 @@ def get_current_user(token: str | None = Depends(oauth2_scheme)) -> dict[str, An
 
 def require_roles(*roles: str):
     """Dependency factory that enforces role membership."""
+
     def _check(user: dict = Depends(get_current_user)) -> dict:
         if user.get("role") not in roles:
             raise HTTPException(
@@ -219,22 +220,28 @@ def require_roles(*roles: str):
                 detail=f"Role '{user.get('role')}' is not authorised for this resource.",
             )
         return user
+
     return _check
 
 
 # ── Legacy stubs ──────────────────────────────────────────────────────────────
 
+
 def hash_password(password: str) -> str:
     from passlib.context import CryptContext
+
     return CryptContext(schemes=["bcrypt"]).hash(password)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     from passlib.context import CryptContext
+
     return CryptContext(schemes=["bcrypt"]).verify(plain, hashed)
 
 
-def create_access_token(subject: str | Any, role: str, extra: dict | None = None) -> str:
+def create_access_token(
+    subject: str | Any, role: str, extra: dict | None = None
+) -> str:
     return f"demo-token-{role.split('_')[0]}"
 
 

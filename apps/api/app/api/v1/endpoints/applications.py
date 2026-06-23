@@ -7,36 +7,53 @@ GET    /api/v1/applications/{id}      → get detail (all roles with access)
 PATCH  /api/v1/applications/{id}/ai   → Nathan's agent posts AI assessment results
 GET    /api/v1/applications/{id}/evidence → evidence bundle (Compliance Officer)
 """
-import uuid
-from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, status
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
-from typing import Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_roles
 from app.models.application import Application, ApplicationStatus
 from app.models.user import User
-from app.schemas.application import ApplicationCreate, ApplicationOut, ApplicationListOut, AIAssessmentUpdate, ProgressOut
+from app.schemas.application import (
+    AIAssessmentUpdate,
+    ApplicationCreate,
+    ApplicationListOut,
+    ApplicationOut,
+    ProgressOut,
+)
 from app.schemas.audit import EvidenceBundle
-from app.services.audit_service import AuditService
 from app.services.application_service import ApplicationService
+from app.services.audit_service import AuditService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
-CREDIT_ROLES = ("credit_officer", "risk_manager", "compliance_officer", "ops_manager", "it_admin")
+CREDIT_ROLES = (
+    "credit_officer",
+    "risk_manager",
+    "compliance_officer",
+    "ops_manager",
+    "it_admin",
+)
 
 
 @router.get("", response_model=list[ApplicationListOut], summary="List applications")
 async def list_applications(
-    status_filter: Optional[str] = None,
+    status_filter: str | None = None,
     limit: int = 50,
     offset: int = 0,
     token_data: dict = Depends(require_roles(*CREDIT_ROLES, "borrower_sme")),
     db: AsyncSession = Depends(get_db),
 ) -> list[ApplicationListOut]:
-    query = select(Application).order_by(desc(Application.created_at)).limit(limit).offset(offset)
+    query = (
+        select(Application)
+        .order_by(desc(Application.created_at))
+        .limit(limit)
+        .offset(offset)
+    )
     if status_filter:
         query = query.where(Application.status == status_filter)
 
@@ -54,8 +71,12 @@ async def list_applications(
     return [ApplicationListOut.model_validate(a) for a in apps]
 
 
-@router.post("", response_model=ApplicationOut, status_code=status.HTTP_201_CREATED,
-             summary="Submit new loan application")
+@router.post(
+    "",
+    response_model=ApplicationOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Submit new loan application",
+)
 async def create_application(
     body: ApplicationCreate,
     token_data: dict = Depends(get_current_user),
@@ -66,7 +87,9 @@ async def create_application(
     Accessible by any authenticated user (borrowers submit their own applications).
     Validates all required GDPR consents before accepting.
     """
-    app = await ApplicationService.create(db=db, data=body, borrower_id=token_data["sub"])
+    app = await ApplicationService.create(
+        db=db, data=body, borrower_id=token_data["sub"]
+    )
 
     await AuditService.log(
         db=db,
@@ -81,7 +104,11 @@ async def create_application(
     return ApplicationOut.model_validate(app)
 
 
-@router.get("/queue", response_model=list[ApplicationListOut], summary="Credit officer HITL queue")
+@router.get(
+    "/queue",
+    response_model=list[ApplicationListOut],
+    summary="Credit officer HITL queue",
+)
 async def get_queue(
     token_data: dict = Depends(require_roles(*CREDIT_ROLES)),
     db: AsyncSession = Depends(get_db),
@@ -96,7 +123,9 @@ async def get_queue(
     return [ApplicationListOut.model_validate(a) for a in apps]
 
 
-@router.get("/{application_id}", response_model=ApplicationOut, summary="Get application detail")
+@router.get(
+    "/{application_id}", response_model=ApplicationOut, summary="Get application detail"
+)
 async def get_application(
     application_id: str,
     token_data: dict = Depends(get_current_user),
@@ -106,8 +135,11 @@ async def get_application(
     return ApplicationOut.model_validate(app)
 
 
-@router.patch("/{application_id}/ai", response_model=ApplicationOut,
-              summary="Post AI assessment results (Nathan's agent endpoint)")
+@router.patch(
+    "/{application_id}/ai",
+    response_model=ApplicationOut,
+    summary="Post AI assessment results (Nathan's agent endpoint)",
+)
 async def update_ai_assessment(
     application_id: str,
     body: AIAssessmentUpdate,
@@ -134,8 +166,11 @@ async def update_ai_assessment(
     return ApplicationOut.model_validate(app)
 
 
-@router.get("/{application_id}/evidence", response_model=EvidenceBundle,
-            summary="Retrieve evidence bundle (Compliance Officer)")
+@router.get(
+    "/{application_id}/evidence",
+    response_model=EvidenceBundle,
+    summary="Retrieve evidence bundle (Compliance Officer)",
+)
 async def get_evidence_bundle(
     application_id: str,
     token_data: dict = Depends(require_roles("compliance_officer", "it_admin")),
@@ -164,16 +199,20 @@ async def get_evidence_bundle(
     return bundle
 
 
-@router.get("/{application_id}/progress", response_model=ProgressOut, summary="Get application processing progress")
+@router.get(
+    "/{application_id}/progress",
+    response_model=ProgressOut,
+    summary="Get application processing progress",
+)
 async def get_application_progress(
     application_id: str,
     token_data: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProgressOut:
     app = await ApplicationService.get_or_404(db, application_id)
-    
-    elapsed = (datetime.now(timezone.utc) - app.created_at).total_seconds()
-    
+
+    elapsed = (datetime.now(UTC) - app.created_at).total_seconds()
+
     step = 0
     if elapsed >= 0.9:
         step = 1
@@ -187,12 +226,14 @@ async def get_application_progress(
         step = 5
     if elapsed >= 7.1:
         step = 6
-        
-    if app.status in [ApplicationStatus.ai_assessment, ApplicationStatus.hitl_queue, ApplicationStatus.approved, ApplicationStatus.declined, ApplicationStatus.referred]:
+
+    if app.status in [
+        ApplicationStatus.ai_assessment,
+        ApplicationStatus.hitl_queue,
+        ApplicationStatus.approved,
+        ApplicationStatus.declined,
+        ApplicationStatus.referred,
+    ]:
         step = 6
 
-    return ProgressOut(
-        step=step,
-        total_steps=6,
-        completed=step >= 6
-    )
+    return ProgressOut(step=step, total_steps=6, completed=step >= 6)

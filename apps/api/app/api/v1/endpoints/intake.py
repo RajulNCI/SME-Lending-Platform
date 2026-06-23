@@ -12,15 +12,13 @@ Flow:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -49,7 +47,7 @@ async def submit_application(
     sector: str = Form("Technology"),
     loanAmount: str = Form("50000"),
     loanType: str = Form("WORKING_CAPITAL"),
-    requestedBy: Optional[str] = Form(None),
+    requestedBy: str | None = Form(None),
     files: list[UploadFile] = File(default=[]),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -58,7 +56,7 @@ async def submit_application(
     app_id = str(uuid.uuid4())
     job_id = str(uuid.uuid4())
     reference = f"FP-{datetime.now().year}-{random.randint(1000, 9999)}"
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # 1. Upload documents to S3, collect keys
     s3_document_keys: list[str] = []

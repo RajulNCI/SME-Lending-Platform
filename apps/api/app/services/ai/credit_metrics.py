@@ -52,7 +52,9 @@ def ecl_12m(pd_value: float, lgd_value: float, ead_value: float) -> float:
     return round(pd_value * lgd_value * ead_value, 2)
 
 
-def ecl_lifetime(pd_value: float, lgd_value: float, ead_value: float, term_months: int) -> float:
+def ecl_lifetime(
+    pd_value: float, lgd_value: float, ead_value: float, term_months: int
+) -> float:
     """Simplified lifetime ECL — cumulative PD over term, assuming flat hazard rate."""
     years = term_months / 12
     cumulative_pd = 1 - (1 - pd_value) ** years

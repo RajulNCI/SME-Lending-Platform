@@ -53,7 +53,9 @@ async def _call_ml_service(endpoint: str, payload: dict) -> dict:
             ),
         )
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=502, detail=f"ML service error: {exc.response.text}")
+        raise HTTPException(
+            status_code=502, detail=f"ML service error: {exc.response.text}"
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to call ML service: {exc}")
 
@@ -76,8 +78,18 @@ def _build_feature_dict(app: Application) -> dict:
 
 
 def _persist_assessment(app: Application, assessment: dict) -> None:
-    fields = ["ai_score", "risk_grade", "pd", "dscr", "apr", "affordability",
-              "ecl_12m", "shap_codes", "ifrs9_stage", "model_version"]
+    fields = [
+        "ai_score",
+        "risk_grade",
+        "pd",
+        "dscr",
+        "apr",
+        "affordability",
+        "ecl_12m",
+        "shap_codes",
+        "ifrs9_stage",
+        "model_version",
+    ]
     for field in fields:
         value = assessment.get(field)
         if value is not None:
@@ -93,7 +105,9 @@ async def process_ai(
 ) -> dict:
     stage = "load"
     try:
-        result = await db.execute(select(Application).where(Application.id == application_id))
+        result = await db.execute(
+            select(Application).where(Application.id == application_id)
+        )
         app = result.scalar_one_or_none()
         if not app:
             raise HTTPException(status_code=404, detail="Application not found")
@@ -123,7 +137,9 @@ async def process_ai(
         raise
     except Exception as exc:
         logger.error("AI pipeline failed at stage [%s]: %s", stage, exc)
-        raise HTTPException(status_code=500, detail=f"AI processing failed at stage '{stage}': {exc}")
+        raise HTTPException(
+            status_code=500, detail=f"AI processing failed at stage '{stage}': {exc}"
+        )
 
 
 @router.get("/applications/{application_id}/assessment")
@@ -131,17 +147,25 @@ async def get_assessment(
     application_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    result = await db.execute(select(Application).where(Application.id == application_id))
+    result = await db.execute(
+        select(Application).where(Application.id == application_id)
+    )
     app = result.scalar_one_or_none()
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
 
     pd_val = float(app.pd) if app.pd else None
     recommended = (
-        "APPROVED" if pd_val and pd_val < 0.2
-        else "REFERRED" if pd_val and pd_val < 0.4
-        else "DECLINED"
-    ) if pd_val else None
+        (
+            "APPROVED"
+            if pd_val and pd_val < 0.2
+            else "REFERRED"
+            if pd_val and pd_val < 0.4
+            else "DECLINED"
+        )
+        if pd_val
+        else None
+    )
 
     return {
         "pd": pd_val,

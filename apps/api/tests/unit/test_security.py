@@ -1,6 +1,13 @@
 """Unit tests — JWT and password utilities."""
+
 import pytest
-from app.core.security import hash_password, verify_password, create_access_token, decode_token
+
+from app.core.security import (
+    create_access_token,
+    decode_token,
+    hash_password,
+    verify_password,
+)
 
 
 def test_password_hash_and_verify():
@@ -21,5 +28,6 @@ def test_create_and_decode_token():
 
 def test_invalid_token_raises():
     from fastapi import HTTPException
+
     with pytest.raises(HTTPException):
         decode_token("not-a-valid-token")

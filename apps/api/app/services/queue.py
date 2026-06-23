@@ -81,6 +81,7 @@ def _build_queue() -> InMemoryJobQueue | SQSJobQueue:
     """Auto-select backend based on environment."""
     try:
         from app.core.config import settings
+
         if settings.AWS_SQS_QUEUE_URL:
             return SQSJobQueue(settings.AWS_SQS_QUEUE_URL, settings.AWS_REGION)
     except Exception:

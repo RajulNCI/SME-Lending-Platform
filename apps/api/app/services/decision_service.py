@@ -1,13 +1,15 @@
 """
 Decision service — HITL decision creation with immutable audit.
 """
+
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import UTC, datetime
+
+from fastapi import HTTPException
 from sqlalchemy import select
-from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.application import Application, ApplicationStatus
 from app.models.decision import Decision, DecisionOutcome
@@ -15,7 +17,6 @@ from app.schemas.decision import DecisionCreate
 
 
 class DecisionService:
-
     @staticmethod
     async def create(
         db: AsyncSession,
@@ -33,16 +34,19 @@ class DecisionService:
 
         # Compute integrity hash for tamper-evidence (NFR-002)
         decision_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc)
-        hash_content = json.dumps({
-            "id": decision_id,
-            "application_id": application_id,
-            "officer_id": officer_id,
-            "outcome": data.outcome,
-            "rationale": data.rationale,
-            "model_version": app.model_version,
-            "timestamp": now.isoformat(),
-        }, sort_keys=True)
+        now = datetime.now(UTC)
+        hash_content = json.dumps(
+            {
+                "id": decision_id,
+                "application_id": application_id,
+                "officer_id": officer_id,
+                "outcome": data.outcome,
+                "rationale": data.rationale,
+                "model_version": app.model_version,
+                "timestamp": now.isoformat(),
+            },
+            sort_keys=True,
+        )
         integrity_hash = hashlib.sha256(hash_content.encode()).hexdigest()
 
         decision = Decision(

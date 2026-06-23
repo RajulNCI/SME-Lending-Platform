@@ -1,33 +1,34 @@
 """
 Application service — business logic for loan applications.
 """
+
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from datetime import UTC, datetime
+
 from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.application import Application, ApplicationStatus
 from app.models.decision import Decision
-from app.schemas.application import ApplicationCreate, AIAssessmentUpdate
-from app.schemas.audit import EvidenceBundle, AuditLogOut
+from app.schemas.application import AIAssessmentUpdate, ApplicationCreate
+from app.schemas.audit import AuditLogOut, EvidenceBundle
 from app.services.audit_service import AuditService
 
 
 def _generate_reference() -> str:
     """Generate a human-readable application reference like FP-2026-0042."""
     import random
+
     return f"FP-{datetime.now().year}-{random.randint(1000, 9999)}"
 
 
 class ApplicationService:
-
     @staticmethod
     async def create(
         db: AsyncSession,
         data: ApplicationCreate,
-        borrower_id: Optional[str] = None,
+        borrower_id: str | None = None,
     ) -> Application:
         app = Application(
             id=str(uuid.uuid4()),
@@ -50,13 +51,17 @@ class ApplicationService:
             annual_revenue=float(data.annual_revenue) if data.annual_revenue else None,
             net_profit=float(data.net_profit) if data.net_profit else None,
             total_assets=float(data.total_assets) if data.total_assets else None,
-            total_liabilities=float(data.total_liabilities) if data.total_liabilities else None,
+            total_liabilities=float(data.total_liabilities)
+            if data.total_liabilities
+            else None,
             existing_debt=float(data.existing_debt) if data.existing_debt else None,
-            monthly_repayment=float(data.monthly_repayment) if data.monthly_repayment else None,
+            monthly_repayment=float(data.monthly_repayment)
+            if data.monthly_repayment
+            else None,
             consent_data_processing=data.consent_data_processing,
             consent_ccr=data.consent_ccr,
             consent_ai_decision=data.consent_ai_decision,
-            consent_timestamp=datetime.now(timezone.utc),
+            consent_timestamp=datetime.now(UTC),
             borrower_id=borrower_id,
             status=ApplicationStatus.submitted,
         )
@@ -146,7 +151,9 @@ class ApplicationService:
             pd=app.pd,
             shap_codes=app.shap_codes,
             ifrs9_stage=app.ifrs9_stage,
-            approver_username=decision.officer.username if decision and decision.officer else None,
+            approver_username=decision.officer.username
+            if decision and decision.officer
+            else None,
             rationale=decision.rationale if decision else None,
             consent_data_processing=app.consent_data_processing,
             consent_ccr=app.consent_ccr,
@@ -155,6 +162,6 @@ class ApplicationService:
             decided_at=decision.decided_at if decision else None,
             integrity_hash=decision.integrity_hash if decision else None,
             retrieved_by=retrieved_by,
-            retrieved_at=datetime.now(timezone.utc),
+            retrieved_at=datetime.now(UTC),
             audit_events=[AuditLogOut.model_validate(e) for e in audit_entries],
         )

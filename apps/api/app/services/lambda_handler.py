@@ -36,19 +36,40 @@ import boto3
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 # Install AI packages at cold start into /tmp (Lambda has no pre-installed sklearn/lightgbm)
 def _bootstrap_packages():
     import subprocess
-    pkgs = ["numpy", "pandas", "scikit-learn", "lightgbm", "shap", "joblib", "sklearn-crfsuite"]
+
+    pkgs = [
+        "numpy",
+        "pandas",
+        "scikit-learn",
+        "lightgbm",
+        "shap",
+        "joblib",
+        "sklearn-crfsuite",
+    ]
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "--quiet", "--target", "/tmp/site-packages"] + pkgs,
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--quiet",
+            "--target",
+            "/tmp/site-packages",
+            *pkgs,
+        ],
         check=True,
     )
     if "/tmp/site-packages" not in sys.path:
         sys.path.insert(0, "/tmp/site-packages")
 
+
 # Only install on cold start (not on warm invocations)
 import os as _os
+
 if not _os.path.exists("/tmp/site-packages/numpy"):
     _bootstrap_packages()
 elif "/tmp/site-packages" not in sys.path:
@@ -63,6 +84,7 @@ _MODEL_CACHE: dict[str, str] = {}
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
+
 
 def lambda_handler(event: dict, context) -> dict:
     records = event.get("Records", [])
@@ -86,11 +108,14 @@ def lambda_handler(event: dict, context) -> dict:
 
 # ── Processing pipeline ───────────────────────────────────────────────────────
 
+
 def _process(application_id: str, job_id: str, s3_keys: list[str]) -> None:
     _ensure_app_code_importable()
 
     # Step 1 — Application received (already submitted)
-    _update_job(job_id, application_id, "running", step="APPLICATION_SUBMITTED", progress=10)
+    _update_job(
+        job_id, application_id, "running", step="APPLICATION_SUBMITTED", progress=10
+    )
 
     # Step 2 — IDP / OCR extraction
     _update_job(job_id, application_id, "running", step="IDP_OCR", progress=25)
@@ -113,15 +138,22 @@ def _process(application_id: str, job_id: str, s3_keys: list[str]) -> None:
     _persist_results(application_id, extracted, result)
 
     _update_job(job_id, application_id, "completed", step="COMPLETED", progress=100)
-    logger.info("application %s processed successfully — grade=%s pd=%.4f",
-                application_id, result.get("risk_grade"), result.get("pd", 0))
+    logger.info(
+        "application %s processed successfully — grade=%s pd=%.4f",
+        application_id,
+        result.get("risk_grade"),
+        result.get("pd", 0),
+    )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _ensure_app_code_importable() -> None:
     """Add the Lambda package root to sys.path so app.* imports work."""
-    pkg_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    pkg_root = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     if pkg_root not in sys.path:
         sys.path.insert(0, pkg_root)
 
@@ -150,8 +182,9 @@ def _download_documents(s3_keys: list[str]) -> list[str]:
 
 
 def _run_idp(doc_paths: list[str]) -> dict:
-    from app.services.ai.idp.extractor import extract_document
     from pathlib import Path
+
+    from app.services.ai.idp.extractor import extract_document
 
     # Ensure IDP CRF model is loaded from S3
     _download_model("models/finpal_extractor.joblib")
@@ -172,6 +205,7 @@ def _run_assessment(data: dict) -> dict:
     _download_model("models/finpal_pd_model.joblib")
 
     from app.services.ai.assessment_service import assess
+
     return assess(data)
 
 
@@ -190,13 +224,26 @@ def _load_application_fields(application_id: str) -> dict:
             app_id=application_id,
         )
         if not rows:
-            logger.warning("Application %s not found in RDS — using defaults", application_id)
+            logger.warning(
+                "Application %s not found in RDS — using defaults", application_id
+            )
             return {}
         row = rows[0]
-        cols = ["sector", "annual_revenue", "net_profit", "total_assets", "total_liabilities",
-                "existing_debt", "monthly_repayment", "loan_amount", "loan_term_months",
-                "loan_purpose", "has_collateral", "years_trading"]
-        return {c: v for c, v in zip(cols, row) if v is not None}
+        cols = [
+            "sector",
+            "annual_revenue",
+            "net_profit",
+            "total_assets",
+            "total_liabilities",
+            "existing_debt",
+            "monthly_repayment",
+            "loan_amount",
+            "loan_term_months",
+            "loan_purpose",
+            "has_collateral",
+            "years_trading",
+        ]
+        return {c: v for c, v in zip(cols, row, strict=False) if v is not None}
     finally:
         conn.close()
 

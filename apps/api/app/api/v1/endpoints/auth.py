@@ -10,6 +10,7 @@ GET  /api/v1/auth/me     → returns current user info from token
 
 TODO: Replace with AWS Cognito integration for production.
 """
+
 from fastapi import APIRouter, HTTPException, status
 
 from app.schemas.auth import LoginRequest, LoginResponse

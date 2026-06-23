@@ -94,6 +94,7 @@ app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
 if settings.ENVIRONMENT != "production":
     try:
         from app.api.v1.endpoints.local_ai import router as local_ai_router
+
         app.include_router(local_ai_router)
     except ImportError:
         pass
