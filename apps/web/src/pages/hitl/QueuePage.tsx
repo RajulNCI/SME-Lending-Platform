@@ -6,6 +6,8 @@ import ApplicationDetail from '../../features/queue/ApplicationDetail';
 import { MOCK_APPS_DATA } from '../../data/mockQueueDetails';
 import PageLayout from '../../components/layout/PageLayout';
 import { Button } from '../../components/ui/Button';
+import { getApplicationDetail } from '../../services/AIApi';
+import type { AppDetail } from '../../features/queue/types';
 
 const QueuePage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -13,6 +15,7 @@ const QueuePage: React.FC = () => {
   
   const [filter, setFilter] = useState('all');
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+  const [selectedAppDetail, setSelectedAppDetail] = useState<AppDetail | null>(null);
   const [submitted, setSubmitted] = useState<Record<string, string>>({});
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -29,31 +32,58 @@ const QueuePage: React.FC = () => {
     }
   };
 
-  // Helper to enrich dynamic apps with rich static data template
-  const getEnrichedApps = () => {
-    const template = MOCK_APPS_DATA[0]; // Use O'Brien as the base template for rich data
-    
-    return apps.map(dynamicApp => {
-      // Find if we already have a static match (e.g. if we kept static seeded apps)
-      const staticMatch = MOCK_APPS_DATA.find(a => a.id === dynamicApp.applicationId);
-      
-      const baseApp = staticMatch || template;
-      
-      return {
-        ...baseApp,
-        id: dynamicApp.applicationId,
-        company: dynamicApp.company || baseApp.company,
-        amount: `€${(dynamicApp.requestedAmount || 0).toLocaleString()}`,
-        requestedAmount: dynamicApp.requestedAmount,
-        status: dynamicApp.status,
-        sector: dynamicApp.sector || baseApp.sector,
-        hitl: dynamicApp.hitl || baseApp.hitl,
-        decision: dynamicApp.officerDecision || null
-      };
-    });
-  };
+  const enrichedApps = apps.map(a => ({
+    ...a,
+    id: a.applicationId,
+    decision: a.officerDecision || null,
+  }));
 
-  const enrichedApps = getEnrichedApps();
+  const openApp = async (appId: string) => {
+    setSelectedAppId(appId);
+    setSelectedAppDetail(null);
+    try {
+      const raw = await getApplicationDetail(appId);
+      const shapCodes: import('../../features/queue/types').ShapValue[] = (raw.shap_codes || []).map((s: any) => ({
+        feature: s.feature,
+        value: s.weight ?? s.value ?? 0,
+        direction: (s.direction === 'reduces_risk' ? 'positive' : 'negative') as 'positive' | 'negative',
+      }));
+      const detail: AppDetail = {
+        id: raw.id,
+        company: raw.company_name || 'Unknown',
+        crn: raw.crn,
+        sector: raw.sector || 'N/A',
+        amount: `€${parseFloat(String(raw.loan_amount ?? raw.loanAmount ?? 0)).toLocaleString()}`,
+        loanType: raw.loan_purpose || 'N/A',
+        status: raw.status,
+        hitl: raw.status === 'hitl_queue',
+        hitlReason: raw.status === 'hitl_queue' ? 'Awaiting officer review' : undefined,
+        pd: raw.pd,
+        riskGrade: raw.risk_grade,
+        dscr: raw.dscr,
+        apr: raw.apr,
+        affordability: raw.affordability,
+        lgd: raw.lgd,
+        ead: raw.ead,
+        ecl12m: raw.ecl_12m,
+        eclLifetime: raw.ecl_lifetime,
+        eclStage: raw.ifrs9_stage as 1 | 2 | 3 | undefined,
+        narrative: raw.narrative,
+        shapValues: shapCodes,
+        checks: raw.checks || [],
+        bars: raw.bars || [],
+        fairnessMetrics: raw.fairness_metrics,
+        discrepancy: raw.discrepancy,
+        discrepancyDetail: raw.discrepancy_detail,
+        revenue: raw.annual_revenue != null ? `€${parseFloat(String(raw.annual_revenue)).toLocaleString()}` : undefined,
+        revenueActual: raw.revenue_actual != null ? `€${parseFloat(String(raw.revenue_actual)).toLocaleString()}` : undefined,
+        cashflow: raw.free_cash_flow != null ? `€${parseFloat(String(raw.free_cash_flow)).toLocaleString()}` : undefined,
+      };
+      setSelectedAppDetail(detail);
+    } catch (err) {
+      console.error('Failed to load app detail', err);
+    }
+  };
 
   const filteredApps = enrichedApps.filter((app) => {
     if (filter === 'all') return true;
@@ -103,7 +133,7 @@ const QueuePage: React.FC = () => {
     return styles.gC;
   };
 
-  const selectedApp = selectedAppId ? enrichedApps.find(a => a.id === selectedAppId) : null;
+  const selectedApp = selectedAppDetail;
 
   return (
     <>
@@ -171,7 +201,7 @@ const QueuePage: React.FC = () => {
                     <div 
                       key={app.id} 
                       className={`${styles.qRow} ${app.status === 'flagged' ? styles.qRowFlagged : ''}`} 
-                      onClick={() => setSelectedAppId(app.id)}
+                      onClick={() => openApp(app.id)}
                     >
                       <div className={styles.qTd}>
                         <span className={`${styles.badge} ${bClass(p)}`}>
@@ -209,12 +239,17 @@ const QueuePage: React.FC = () => {
           )}
 
           {/* APP DETAIL VIEW */}
+          {selectedAppId && !selectedApp && (
+            <div style={{ padding: '2rem', color: 'var(--muted)', textAlign: 'center' }}>
+              Loading application details…
+            </div>
+          )}
           {selectedAppId && selectedApp && (
-            <ApplicationDetail 
-              app={selectedApp} 
-              onBack={() => setSelectedAppId(null)}
+            <ApplicationDetail
+              app={selectedApp}
+              onBack={() => { setSelectedAppId(null); setSelectedAppDetail(null); }}
               onDecision={onDecision}
-              submittedDecision={submitted[selectedApp.id] || selectedApp.decision}
+              submittedDecision={submitted[selectedApp.id] || null}
               showToast={showToast}
             />
           )}

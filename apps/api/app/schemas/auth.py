@@ -1,6 +1,8 @@
 """Auth schemas — login request/response, token payload."""
-from pydantic import BaseModel, EmailStr, field_validator
+
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class LoginRequest(BaseModel):

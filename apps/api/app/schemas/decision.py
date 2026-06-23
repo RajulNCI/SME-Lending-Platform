@@ -1,11 +1,14 @@
 """Decision schemas."""
-from pydantic import BaseModel, field_validator
-from typing import Optional, Any
+
 from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, field_validator
 
 
 class DecisionCreate(BaseModel):
     """Posted by Credit Officer when making a HITL decision."""
+
     outcome: str  # approved | declined | referred
     rationale: str
 
@@ -20,7 +23,9 @@ class DecisionCreate(BaseModel):
     @classmethod
     def min_rationale(cls, v: str) -> str:
         if len(v.strip()) < 20:
-            raise ValueError("Rationale must be at least 20 characters (EU AI Act Art.12)")
+            raise ValueError(
+                "Rationale must be at least 20 characters (EU AI Act Art.12)"
+            )
         return v
 
 
@@ -30,11 +35,11 @@ class DecisionOut(BaseModel):
     officer_id: str
     outcome: str
     rationale: str
-    model_version: str
-    ai_score: Optional[float] = None
-    risk_grade: Optional[str] = None
-    shap_snapshot: Optional[list[dict[str, Any]]] = None
+    model_version: str = "finpal-pd-v2.4.1"
+    ai_score: float | None = None
+    risk_grade: str | None = None
+    shap_snapshot: list[dict[str, Any]] | None = None
     decided_at: datetime
-    integrity_hash: Optional[str] = None
+    integrity_hash: str | None = None
 
     model_config = {"from_attributes": True}

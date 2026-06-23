@@ -22,11 +22,10 @@ export function useApplicationPolling(applicationId: string | null, totalSteps: 
         const progData = await getProgress(idToUse);
         setCurrentStep(Math.min(progData.step, totalSteps));
         
-        if (progData.completed) {
+        if (progData.completed || progData.step >= 5) {
           setIsComplete(true);
           setDecision(progData.decision || null);
         } else {
-          // Poll every 3 seconds (real API, no need to advance steps)
           pollTimer.current = setTimeout(poll, 3000);
         }
       } catch (err) {

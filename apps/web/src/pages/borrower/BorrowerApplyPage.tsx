@@ -38,27 +38,26 @@ const BorrowerApplyPage: React.FC = () => {
   const handleSubmit = async () => {
     setWizardStep(3); // Move to progress tracker UI immediately
     setSubmitError(null);
-    
+
     try {
-      // Collect the actual files from the upload hook
       const files = uploadHook.files.map(uf => uf.file);
 
       const appData = await createApplication({
         companyName: user?.displayName || 'Borrower SME Ltd',
-        sector: 'Technology', // Default sector — could add a form field
+        sector: 'Technology',
         loanAmount: parseFloat(amount) || 50000,
         loanType: PURPOSE_TO_LOAN_TYPE[purpose] || 'WORKING_CAPITAL',
         requestedBy: user?.email || '',
         files: files.length > 0 ? files : undefined,
       });
-      
+
       const id = appData.id || appData.applicationId || '';
       setAppId(id);
-      
-      // Start polling passing the ID explicitly
+
+      // Start polling immediately so the progress UI moves off step 0
       pollingHook.startPolling(id);
-      
-    } catch (err: any) {
+
+} catch (err: any) {
       console.error("API Error", err);
       setSubmitError(err.message || 'Failed to submit application');
     }

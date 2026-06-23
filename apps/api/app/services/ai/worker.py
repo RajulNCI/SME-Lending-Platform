@@ -89,7 +89,7 @@ async def process_job(job_id: str, session_factory=AsyncSessionLocal) -> None:
             return
 
         try:
-            job.status = JobStatus.processing
+            job.status = JobStatus.running
             await db.commit()
 
             # ---- Engine 1: documents -> fields ----
@@ -139,9 +139,11 @@ async def process_job(job_id: str, session_factory=AsyncSessionLocal) -> None:
 
 
 async def worker_loop(queue, session_factory=AsyncSessionLocal) -> None:
-    """Long-running consumer: dequeue job ids and process them."""
+    """Long-running consumer: dequeue messages and process them."""
     while True:
-        job_id = await queue.dequeue()
+        message = await queue.dequeue()
+        # message is a dict: {"job_id": "...", "application_id": "...", "s3_document_keys": [...]}
+        job_id = message["job_id"] if isinstance(message, dict) else message
         try:
             await process_job(job_id, session_factory)
         finally:

@@ -14,7 +14,27 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ARTIFACT = Path(__file__).resolve().parent / "artifacts" / "finpal_pd_model.joblib"
+_LOCAL_ARTIFACT = (
+    Path(__file__).resolve().parent / "artifacts" / "finpal_pd_model.joblib"
+)
+_S3_KEY = "models/finpal_pd_model.joblib"
+
+
+def _artifact_path() -> Path:
+    """Return local path, downloading from S3 if running in Lambda (no local file)."""
+    if _LOCAL_ARTIFACT.exists():
+        return _LOCAL_ARTIFACT
+    import os
+    import tempfile
+
+    import boto3
+
+    bucket = os.environ.get("S3_MODELS_BUCKET", "creditcore-ai-models-dev")
+    tmp = Path(tempfile.gettempdir()) / "finpal_pd_model.joblib"
+    if not tmp.exists():
+        boto3.client("s3").download_file(bucket, _S3_KEY, str(tmp))
+    return tmp
+
 
 _GRADE_BANDS = [
     (0.02, "A"),
@@ -46,7 +66,7 @@ _PRETTY = {
 def _load():
     import joblib
 
-    return joblib.load(ARTIFACT)
+    return joblib.load(_artifact_path())
 
 
 def model_version() -> str:

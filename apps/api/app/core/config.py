@@ -2,10 +2,11 @@
 Application configuration — loaded from environment variables.
 All settings have safe defaults for local development.
 """
-from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import List
+
 import json
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -19,30 +20,36 @@ class Settings(BaseSettings):
 
     # ── Database ──────────────────────────────────────────────────────────────
     DATABASE_URL: str = (
-        "postgresql+asyncpg://finpal:password@localhost:5432/finpal_dev"
+        "postgresql+asyncpg://creditcore:password@localhost:5432/creditcore_dev"
     )
 
-    # ── JWT ───────────────────────────────────────────────────────────────────
+    # ── JWT / Cognito ─────────────────────────────────────────────────────────
     JWT_SECRET_KEY: str = "dev-jwt-secret-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 480  # 8 hours
 
+    COGNITO_USER_POOL_ID: str = ""
+    COGNITO_CLIENT_ID: str = ""
+    COGNITO_REGION: str = "us-east-1"
+
     # ── CORS ──────────────────────────────────────────────────────────────────
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def parse_cors(cls, v: str | List[str]) -> List[str]:
+    def parse_cors(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str):
             return json.loads(v)
         return v
 
     # ── AWS ───────────────────────────────────────────────────────────────────
-    AWS_REGION: str = "eu-west-1"
-    AWS_S3_BUCKET: str = "finpal-documents-dev"
+    AWS_REGION: str = "us-east-1"
+    AWS_S3_DOCUMENTS_BUCKET: str = "creditcore-documents-dev"
+    AWS_S3_MODELS_BUCKET: str = "creditcore-ai-models-dev"
+    AWS_SQS_QUEUE_URL: str = ""
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_SESSION_TOKEN: str = ""
@@ -50,7 +57,11 @@ class Settings(BaseSettings):
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": True}
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+    }
 
 
 settings = Settings()

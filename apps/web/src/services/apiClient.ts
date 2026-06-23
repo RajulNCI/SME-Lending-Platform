@@ -7,9 +7,20 @@
  * - Typed request helpers
  */
 
-const API_BASE = ''; // Uses Vite proxy in dev → rewrites /api/* to AWS
+// Empty base in both dev and prod:
+//   Dev  → Vite proxy (vite.config.ts) rewrites /api/* to AWS
+//   Prod → Vercel rewrite (vercel.json) proxies /api/* to AWS
+// Both keep requests same-origin, avoiding CORS entirely.
+const API_BASE = '';
 
 // ── Token helpers ────────────────────────────────────────────────────────────
+
+// In-memory token — set on login, cleared on logout (supports both Cognito JWTs and demo tokens)
+let _memoryToken: string | null = null;
+
+export function setAuthToken(token: string): void {
+  _memoryToken = token;
+}
 
 export function getStoredAuth(): { token: string; user: any } | null {
   try {
@@ -21,11 +32,12 @@ export function getStoredAuth(): { token: string; user: any } | null {
 }
 
 export function getToken(): string | null {
-  return getStoredAuth()?.token ?? null;
+  return _memoryToken ?? getStoredAuth()?.token ?? null;
 }
 
 export function clearAuth(): void {
   sessionStorage.removeItem('finpal_auth');
+  _memoryToken = null;
 }
 
 // ── Core fetch wrapper ───────────────────────────────────────────────────────

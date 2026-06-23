@@ -1,0 +1,28 @@
+FROM public.ecr.aws/lambda/python:3.12
+
+# libgomp required by LightGBM
+RUN dnf install -y libgomp && dnf clean all
+
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+COPY pyproject.toml .
+RUN pip install --no-cache-dir \
+    boto3 \
+    pg8000 \
+    lightgbm \
+    scikit-learn \
+    sklearn-crfsuite \
+    pandas \
+    numpy \
+    shap \
+    pdfplumber \
+    python-docx \
+    openpyxl \
+    joblib \
+    pydantic-settings \
+    python-dotenv
+
+# Application code (AI pipeline + rules engine)
+COPY app/ ./app/
+
+CMD ["app.services.lambda_handler.lambda_handler"]

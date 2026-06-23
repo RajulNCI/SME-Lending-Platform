@@ -17,8 +17,8 @@ from app.core.database import Base
 
 
 class JobStatus(str, enum.Enum):
-    queued = "queued"
-    processing = "processing"
+    pending = "pending"
+    running = "running"
     completed = "completed"
     failed = "failed"
 
@@ -44,7 +44,7 @@ class ProcessingJob(Base):
         String(36), ForeignKey("applications.id"), nullable=False, index=True
     )
     status: Mapped[JobStatus] = mapped_column(
-        SAEnum(JobStatus), default=JobStatus.queued, nullable=False
+        SAEnum(JobStatus), default=JobStatus.pending, nullable=False
     )
     current_step: Mapped[str | None] = mapped_column(String(40), nullable=True)
     progress: Mapped[int] = mapped_column(Integer, default=0)  # 0..100

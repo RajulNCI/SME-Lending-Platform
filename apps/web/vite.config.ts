@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
       '@': '/src',
@@ -13,19 +16,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev',
+        target: 'https://tvuegpy2w7.execute-api.us-east-1.amazonaws.com/prod',
         changeOrigin: true,
-        secure: true,
-      },
-      '/health': {
-        target: 'https://tschbnmf03.execute-api.eu-west-1.amazonaws.com/dev',
-        changeOrigin: true,
-        secure: true,
-      },
-      '/ai-api': {
-        target: 'https://finpals-prototype.vercel.app',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/ai-api/, ''),
       },
     },
   },

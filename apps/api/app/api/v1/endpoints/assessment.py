@@ -15,7 +15,6 @@ from app.core.database import get_db
 from app.core.security import get_current_user, require_roles
 from app.models.application import Application, ApplicationStatus
 from app.schemas.assessment import AssessmentIn, AssessmentOut
-from app.services.ai.assessment_service import apply_to_orm, assess
 from app.services.audit_service import AuditService
 
 router = APIRouter(tags=["assessment"])
@@ -32,6 +31,8 @@ async def assess_stateless(
 ) -> AssessmentOut:
     """Production integration point: backend sends fields, gets the assessment JSON to
     store in its own database (DynamoDB). No persistence here."""
+    from app.services.ai.assessment_service import assess
+
     data = body.model_dump(exclude={"reference"})
     assessment = assess(data)
     return AssessmentOut(application_id=body.reference, **assessment)
@@ -71,6 +72,8 @@ async def run_assessment(
     application = result.scalar_one_or_none()
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
+
+    from app.services.ai.assessment_service import apply_to_orm, assess
 
     app_data = {f: getattr(application, f, None) for f in _FIELDS}
     assessment = assess(app_data)
