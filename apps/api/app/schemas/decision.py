@@ -35,7 +35,7 @@ class DecisionOut(BaseModel):
     officer_id: str
     outcome: str
     rationale: str
-    model_version: str
+    model_version: str = "finpal-pd-v2.4.1"
     ai_score: float | None = None
     risk_grade: str | None = None
     shap_snapshot: list[dict[str, Any]] | None = None

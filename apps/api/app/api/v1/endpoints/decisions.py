@@ -40,6 +40,7 @@ async def create_decision(
         db=db,
         application_id=application_id,
         officer_id=token_data["sub"],
+        officer_username=token_data.get("username"),
         data=body,
     )
 
