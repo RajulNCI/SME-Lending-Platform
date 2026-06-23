@@ -313,9 +313,10 @@ export async function getQueue(): Promise<QueueApplicationSummary[]> {
 // ── Submit Decision (Credit Officer) ─────────────────────────────────────────
 
 export async function submitDecision(req: SubmitDecisionRequest): Promise<SubmitDecisionResponse> {
-  const res = await apiPost<any>(`/api/v1/applications/${req.applicationId}/decision`, {
-    decision: req.decision,
-    notes: req.notes,
+  // Backend route is plural `/decisions` and expects { outcome (lowercase), rationale }.
+  const res = await apiPost<any>(`/api/v1/applications/${req.applicationId}/decisions`, {
+    outcome: req.decision.toLowerCase(),
+    rationale: req.notes,
   });
   return {
     success: true,
